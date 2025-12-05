@@ -1,117 +1,5 @@
 use serde_json::{Map, Value};
 
-const FIELDS_ORDER: &[&str] = &[
-    "$schema",
-    "name",
-    "displayName",
-    "version",
-    "stableVersion",
-    "private",
-    "description",
-    "categories",
-    "keywords",
-    "homepage",
-    "bugs",
-    "repository",
-    "funding",
-    "license",
-    "qna",
-    "author",
-    "maintainers",
-    "contributors",
-    "publisher",
-    "sideEffects",
-    "type",
-    "imports",
-    "exports",
-    "main",
-    "svelte",
-    "umd:main",
-    "jsdelivr",
-    "unpkg",
-    "module",
-    "source",
-    "jsnext:main",
-    "browser",
-    "react-native",
-    "types",
-    "typesVersions",
-    "typings",
-    "style",
-    "example",
-    "examplestyle",
-    "assets",
-    "bin",
-    "man",
-    "directories",
-    "files",
-    "workspaces",
-    "binary",
-    "scripts",
-    "betterScripts",
-    "l10n",
-    "contributes",
-    "activationEvents",
-    "husky",
-    "simple-git-hooks",
-    "pre-commit",
-    "commitlint",
-    "lint-staged",
-    "nano-staged",
-    "config",
-    "nodemonConfig",
-    "browserify",
-    "babel",
-    "browserslist",
-    "xo",
-    "prettier",
-    "eslintConfig",
-    "eslintIgnore",
-    "npmpkgjsonlint",
-    "npmPackageJsonLintConfig",
-    "npmpackagejsonlint",
-    "release",
-    "remarkConfig",
-    "stylelint",
-    "ava",
-    "jest",
-    "jest-junit",
-    "jest-stare",
-    "mocha",
-    "nyc",
-    "c8",
-    "tap",
-    "oclif",
-    "resolutions",
-    "overrides",
-    "dependencies",
-    "devDependencies",
-    "dependenciesMeta",
-    "peerDependencies",
-    "peerDependenciesMeta",
-    "optionalDependencies",
-    "bundledDependencies",
-    "bundleDependencies",
-    "extensionPack",
-    "extensionDependencies",
-    "flat",
-    "packageManager",
-    "engines",
-    "engineStrict",
-    "volta",
-    "languageName",
-    "os",
-    "cpu",
-    "preferGlobal",
-    "publishConfig",
-    "icon",
-    "badges",
-    "galleryBanner",
-    "preview",
-    "markdown",
-    "pnpm",
-];
-
 pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
     let value: Value = serde_json::from_str(input)?;
 
@@ -253,121 +141,461 @@ fn sort_exports(obj: &Map<String, Value>) -> Map<String, Value> {
 }
 
 fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
+    // Storage for categorized keys with their values and ordering information
+    let mut known: Vec<(usize, String, Value)> = Vec::new(); // (order_index, key, value)
+    let mut non_private: Vec<(String, Value)> = Vec::new();
+    let mut private: Vec<(String, Value)> = Vec::new();
+
+    // Single pass through all keys using into_iter()
+    for (key, value) in obj {
+        match key.as_str() {
+            "$schema" => known.push((0, key, value)),
+            "name" => known.push((1, key, value)),
+            "displayName" => known.push((2, key, value)),
+            "version" => known.push((3, key, value)),
+            "stableVersion" => known.push((4, key, value)),
+            "private" => known.push((5, key, value)),
+            "description" => known.push((6, key, value)),
+            "categories" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((7, key, transformed));
+            }
+            "keywords" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((8, key, transformed));
+            }
+            "homepage" => known.push((9, key, value)),
+            "bugs" => {
+                let transformed = match &value {
+                    Value::Object(o) => {
+                        Value::Object(sort_object_by_key_order(o, &["url", "email"]))
+                    }
+                    _ => value,
+                };
+                known.push((10, key, transformed));
+            }
+            "repository" => {
+                let transformed = match &value {
+                    Value::Object(o) => {
+                        Value::Object(sort_object_by_key_order(o, &["type", "url"]))
+                    }
+                    _ => value,
+                };
+                known.push((11, key, transformed));
+            }
+            "funding" => {
+                let transformed = match &value {
+                    Value::Object(o) => {
+                        Value::Object(sort_object_by_key_order(o, &["type", "url"]))
+                    }
+                    _ => value,
+                };
+                known.push((12, key, transformed));
+            }
+            "license" => known.push((13, key, value)),
+            "qna" => known.push((14, key, value)),
+            "author" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_people_object(o)),
+                    _ => value,
+                };
+                known.push((15, key, transformed));
+            }
+            "maintainers" => {
+                let transformed = match &value {
+                    Value::Array(arr) => {
+                        let people: Vec<Value> = arr
+                            .iter()
+                            .map(|v| match v {
+                                Value::Object(o) => Value::Object(sort_people_object(o)),
+                                _ => v.clone(),
+                            })
+                            .collect();
+                        Value::Array(people)
+                    }
+                    _ => value,
+                };
+                known.push((16, key, transformed));
+            }
+            "contributors" => {
+                let transformed = match &value {
+                    Value::Array(arr) => {
+                        let people: Vec<Value> = arr
+                            .iter()
+                            .map(|v| match v {
+                                Value::Object(o) => Value::Object(sort_people_object(o)),
+                                _ => v.clone(),
+                            })
+                            .collect();
+                        Value::Array(people)
+                    }
+                    _ => value,
+                };
+                known.push((17, key, transformed));
+            }
+            "publisher" => known.push((18, key, value)),
+            "sideEffects" => known.push((19, key, value)),
+            "type" => known.push((20, key, value)),
+            "imports" => known.push((21, key, value)),
+            "exports" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_exports(o)),
+                    _ => value,
+                };
+                known.push((22, key, transformed));
+            }
+            "main" => known.push((23, key, value)),
+            "svelte" => known.push((24, key, value)),
+            "umd:main" => known.push((25, key, value)),
+            "jsdelivr" => known.push((26, key, value)),
+            "unpkg" => known.push((27, key, value)),
+            "module" => known.push((28, key, value)),
+            "source" => known.push((29, key, value)),
+            "jsnext:main" => known.push((30, key, value)),
+            "browser" => known.push((31, key, value)),
+            "react-native" => known.push((32, key, value)),
+            "types" => known.push((33, key, value)),
+            "typesVersions" => known.push((34, key, value)),
+            "typings" => known.push((35, key, value)),
+            "style" => known.push((36, key, value)),
+            "example" => known.push((37, key, value)),
+            "examplestyle" => known.push((38, key, value)),
+            "assets" => known.push((39, key, value)),
+            "bin" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((40, key, transformed));
+            }
+            "man" => known.push((41, key, value)),
+            "directories" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_by_key_order(
+                        o,
+                        &["lib", "bin", "man", "doc", "example", "test"],
+                    )),
+                    _ => value,
+                };
+                known.push((42, key, transformed));
+            }
+            "files" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((43, key, transformed));
+            }
+            "workspaces" => known.push((44, key, value)),
+            "binary" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_by_key_order(
+                        o,
+                        &["module_name", "module_path", "remote_path", "package_name", "host"],
+                    )),
+                    _ => value,
+                };
+                known.push((45, key, transformed));
+            }
+            "scripts" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_scripts(o)),
+                    _ => value,
+                };
+                known.push((46, key, transformed));
+            }
+            "betterScripts" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_scripts(o)),
+                    _ => value,
+                };
+                known.push((47, key, transformed));
+            }
+            "l10n" => known.push((48, key, value)),
+            "contributes" => known.push((49, key, value)),
+            "activationEvents" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((50, key, transformed));
+            }
+            "husky" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((51, key, transformed));
+            }
+            "simple-git-hooks" => known.push((52, key, value)),
+            "pre-commit" => known.push((53, key, value)),
+            "commitlint" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((54, key, transformed));
+            }
+            "lint-staged" => known.push((55, key, value)),
+            "nano-staged" => known.push((56, key, value)),
+            "config" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((57, key, transformed));
+            }
+            "nodemonConfig" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((58, key, transformed));
+            }
+            "browserify" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((59, key, transformed));
+            }
+            "babel" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((60, key, transformed));
+            }
+            "browserslist" => known.push((61, key, value)),
+            "xo" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((62, key, transformed));
+            }
+            "prettier" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((63, key, transformed));
+            }
+            "eslintConfig" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((64, key, transformed));
+            }
+            "eslintIgnore" => known.push((65, key, value)),
+            "npmpkgjsonlint" => known.push((66, key, value)),
+            "npmPackageJsonLintConfig" => known.push((67, key, value)),
+            "npmpackagejsonlint" => known.push((68, key, value)),
+            "release" => known.push((69, key, value)),
+            "remarkConfig" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((70, key, transformed));
+            }
+            "stylelint" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((71, key, transformed));
+            }
+            "ava" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((72, key, transformed));
+            }
+            "jest" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((73, key, transformed));
+            }
+            "jest-junit" => known.push((74, key, value)),
+            "jest-stare" => known.push((75, key, value)),
+            "mocha" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((76, key, transformed));
+            }
+            "nyc" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((77, key, transformed));
+            }
+            "c8" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((78, key, transformed));
+            }
+            "tap" => known.push((79, key, value)),
+            "oclif" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((80, key, transformed));
+            }
+            "resolutions" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((81, key, transformed));
+            }
+            "overrides" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((82, key, transformed));
+            }
+            "dependencies" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((83, key, transformed));
+            }
+            "devDependencies" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((84, key, transformed));
+            }
+            "dependenciesMeta" => known.push((85, key, value)),
+            "peerDependencies" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((86, key, transformed));
+            }
+            "peerDependenciesMeta" => known.push((87, key, value)),
+            "optionalDependencies" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((88, key, transformed));
+            }
+            "bundledDependencies" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((89, key, transformed));
+            }
+            "bundleDependencies" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((90, key, transformed));
+            }
+            "extensionPack" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((91, key, transformed));
+            }
+            "extensionDependencies" => {
+                let transformed = match &value {
+                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
+                    _ => value,
+                };
+                known.push((92, key, transformed));
+            }
+            "flat" => known.push((93, key, value)),
+            "packageManager" => known.push((94, key, value)),
+            "engines" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((95, key, transformed));
+            }
+            "engineStrict" => known.push((96, key, value)),
+            "volta" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
+                    _ => value,
+                };
+                known.push((97, key, transformed));
+            }
+            "languageName" => known.push((98, key, value)),
+            "os" => known.push((99, key, value)),
+            "cpu" => known.push((100, key, value)),
+            "preferGlobal" => known.push((101, key, value)),
+            "publishConfig" => {
+                let transformed = match &value {
+                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
+                    _ => value,
+                };
+                known.push((102, key, transformed));
+            }
+            "icon" => known.push((103, key, value)),
+            "badges" => known.push((104, key, value)),
+            "galleryBanner" => known.push((105, key, value)),
+            "preview" => known.push((106, key, value)),
+            "markdown" => known.push((107, key, value)),
+            "pnpm" => known.push((108, key, value)),
+            _ => {
+                // Unknown field - check if private
+                if key.starts_with('_') {
+                    private.push((key, value));
+                } else {
+                    non_private.push((key, value));
+                }
+            }
+        }
+    }
+
+    // Sort each category
+    known.sort_by_key(|(index, _, _)| *index);
+    non_private.sort_by(|(a, _), (b, _)| a.cmp(b));
+    private.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+    // Build result map
     let mut result = Map::new();
-    let mut remaining_keys: Vec<String> = obj.keys().cloned().collect();
 
-    // Process fields in FIELDS_ORDER with inline transformations
-    for &field in FIELDS_ORDER {
-        if let Some(value) = obj.get(field) {
-            let transformed = match (field, value) {
-                // Dependency-like fields - alphabetically sorted
-                (
-                    "dependencies"
-                    | "devDependencies"
-                    | "peerDependencies"
-                    | "optionalDependencies"
-                    | "resolutions"
-                    | "overrides"
-                    | "engines"
-                    | "publishConfig"
-                    | "config"
-                    | "bin",
-                    Value::Object(obj),
-                ) => Value::Object(sort_object_alphabetically(obj)),
-
-                // Config objects - recursively sorted
-                (
-                    "babel" | "jest" | "mocha" | "nyc" | "c8" | "ava" | "eslintConfig" | "prettier"
-                    | "stylelint" | "nodemonConfig" | "browserify" | "xo" | "husky" | "commitlint"
-                    | "remarkConfig" | "volta" | "oclif",
-                    Value::Object(obj),
-                ) => Value::Object(sort_object_recursive(obj)),
-
-                // Array fields - deduplicate and sort
-                (
-                    "keywords"
-                    | "files"
-                    | "bundledDependencies"
-                    | "bundleDependencies"
-                    | "categories"
-                    | "activationEvents"
-                    | "extensionPack"
-                    | "extensionDependencies",
-                    Value::Array(arr),
-                ) => Value::Array(sort_array_unique(arr)),
-
-                // Scripts sorting
-                ("scripts" | "betterScripts", Value::Object(obj)) => {
-                    Value::Object(sort_scripts(obj))
-                }
-
-                // Exports sorting
-                ("exports", Value::Object(obj)) => Value::Object(sort_exports(obj)),
-
-                // Objects with specific key ordering
-                ("bugs", Value::Object(obj)) => {
-                    Value::Object(sort_object_by_key_order(obj, &["url", "email"]))
-                }
-                ("repository" | "funding", Value::Object(obj)) => {
-                    Value::Object(sort_object_by_key_order(obj, &["type", "url"]))
-                }
-                ("author", Value::Object(obj)) => Value::Object(sort_people_object(obj)),
-                ("directories", Value::Object(obj)) => Value::Object(sort_object_by_key_order(
-                    obj,
-                    &["lib", "bin", "man", "doc", "example", "test"],
-                )),
-                ("binary", Value::Object(obj)) => Value::Object(sort_object_by_key_order(
-                    obj,
-                    &["module_name", "module_path", "remote_path", "package_name", "host"],
-                )),
-
-                // People arrays
-                ("maintainers" | "contributors", Value::Array(arr)) => {
-                    let people: Vec<Value> = arr
-                        .iter()
-                        .map(|v| match v {
-                            Value::Object(obj) => Value::Object(sort_people_object(obj)),
-                            _ => v.clone(),
-                        })
-                        .collect();
-                    Value::Array(people)
-                }
-
-                // No transformation needed
-                _ => value.clone(),
-            };
-
-            result.insert(field.to_string(), transformed);
-            remaining_keys.retain(|k| k != field);
-        }
+    // Insert known fields (already transformed)
+    for (_index, key, value) in known {
+        result.insert(key, value);
     }
 
-    // Separate remaining keys into non-private and private
-    let mut non_private: Vec<String> = Vec::new();
-    let mut private: Vec<String> = Vec::new();
-
-    for key in remaining_keys {
-        if key.starts_with('_') {
-            private.push(key);
-        } else {
-            non_private.push(key);
-        }
+    // Insert non-private unknown fields
+    for (key, value) in non_private {
+        result.insert(key, value);
     }
 
-    // Sort non-private keys alphabetically
-    non_private.sort();
-    for key in non_private {
-        if let Some(value) = obj.get(&key) {
-            result.insert(key, value.clone());
-        }
-    }
-
-    // Sort private keys alphabetically
-    private.sort();
-    for key in private {
-        if let Some(value) = obj.get(&key) {
-            result.insert(key, value.clone());
-        }
+    // Insert private fields
+    for (key, value) in private {
+        result.insert(key, value);
     }
 
     result

@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use sort_package_json::sort_package_json;
 
 fn bench_small_package(c: &mut Criterion) {
@@ -86,5 +86,11 @@ fn bench_large_package(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_small_package, bench_already_sorted, bench_minimal_package, bench_large_package);
+criterion_group!(
+    benches,
+    bench_small_package,
+    bench_already_sorted,
+    bench_minimal_package,
+    bench_large_package
+);
 criterion_main!(benches);

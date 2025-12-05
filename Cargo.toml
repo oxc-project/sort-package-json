@@ -9,9 +9,9 @@ keywords = []
 license = "MIT"
 publish = true
 readme = "README.md"
-repository = ""
+repository = "https://github.com/oxc-project/sort-package-json"
 rust-version = "1.76"
-description = ""
+description = "A Rust implementation of sort-package-json that sorts package.json files according to well-established npm conventions"
 
 [lints.rust]
 absolute_paths_not_starting_with_crate = "warn"

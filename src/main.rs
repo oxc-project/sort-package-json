@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use std::process;
 
-use walkdir::WalkDir;
+use ignore::WalkBuilder;
 
 #[allow(clippy::print_stderr)]
 fn main() {
@@ -17,8 +17,8 @@ fn main() {
     let mut sorted_files = 0;
     let mut errors = 0;
 
-    for entry in WalkDir::new(search_path)
-        .into_iter()
+    for entry in WalkBuilder::new(search_path)
+        .build()
         .filter_map(Result::ok)
         .filter(|e| e.file_name() == "package.json")
     {

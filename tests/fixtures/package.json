@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "name": "test-package",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "webpack": "^5.0.0"
+  },
+  "keywords": ["test", "example"],
+  "author": "Test Author",
+  "license": "MIT",
+  "description": "A test package for sorting"
+}

@@ -21,7 +21,6 @@ expression: result
     "type": "git",
     "url": "https://github.com/test/test-package"
   },
-  "license": "MIT",
   "author": {
     "name": "Test Author",
     "email": "author@example.com",
@@ -39,6 +38,7 @@ expression: result
       "url": "https://maintainer2.com"
     }
   ],
+  "license": "MIT",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

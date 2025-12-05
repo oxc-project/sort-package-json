@@ -18,7 +18,7 @@ A Rust implementation of [sort-package-json](https://github.com/keithamus/sort-p
 
 ## Features
 
-- **Sorts top-level fields** according to npm ecosystem conventions (97 predefined fields)
+- **Sorts top-level fields** according to npm ecosystem conventions (125 predefined fields)
 - **Preserves all data** - only reorders fields, never modifies values
 - **Fast and safe** - pure Rust implementation with no unsafe code
 - **Idempotent** - sorting multiple times produces the same result
@@ -60,11 +60,11 @@ Running `cargo run package.json` produces:
 
 Fields are sorted according to this priority:
 
-1. **Known fields** - 97 predefined fields in standard order (name, version, description, keywords, ...)
+1. **Known fields** - 125 predefined fields in standard order (name, version, description, keywords, ...)
 2. **Unknown fields** - any custom fields sorted alphabetically
 3. **Private fields** - fields starting with `_` sorted alphabetically at the end
 
-The complete field order follows the [reference implementation](https://github.com/keithamus/sort-package-json/blob/main/index.js).
+The complete field order is based on both the [original sort-package-json](https://github.com/keithamus/sort-package-json/blob/main/index.js) and [prettier's package.json sorting](https://github.com/un-ts/prettier/blob/master/packages/pkg/src/rules/sort.ts) implementations.
 
 ## Why Not simd-json?
 

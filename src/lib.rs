@@ -79,12 +79,6 @@ fn sort_people_object(obj: &Map<String, Value>) -> Map<String, Value> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
-fn sort_scripts(obj: &Map<String, Value>) -> Map<String, Value> {
-    // Simple alphabetical sorting for now
-    // TODO: Implement pre/post grouping and npm-run-all detection
-    sort_object_alphabetically(obj)
-}
-
 fn sort_exports(obj: &Map<String, Value>) -> Map<String, Value> {
     let mut paths = Vec::new();
     let mut types_conds = Vec::new();
@@ -303,20 +297,8 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
                 };
                 known.push((45, key, transformed));
             }
-            "scripts" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_scripts(o)),
-                    _ => value,
-                };
-                known.push((46, key, transformed));
-            }
-            "betterScripts" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_scripts(o)),
-                    _ => value,
-                };
-                known.push((47, key, transformed));
-            }
+            "scripts" => known.push((46, key, value)),
+            "betterScripts" => known.push((47, key, value)),
             "l10n" => known.push((48, key, value)),
             "contributes" => known.push((49, key, value)),
             "activationEvents" => {

@@ -63,12 +63,12 @@ expression: result
     "src"
   ],
   "scripts": {
-    "build": "webpack",
-    "dev": "webpack serve",
-    "lint": "eslint .",
+    "test": "jest",
     "posttest": "echo 'Tests complete'",
+    "build": "webpack",
+    "lint": "eslint .",
     "pretest": "echo 'Starting tests'",
-    "test": "jest"
+    "dev": "webpack serve"
   },
   "babel": {
     "plugins": [

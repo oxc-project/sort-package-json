@@ -412,6 +412,7 @@ dependencies = [
  "criterion2",
  "insta",
  "serde_json",
+ "walkdir",
 ]
 
 [[package]]

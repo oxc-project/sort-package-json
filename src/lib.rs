@@ -118,7 +118,9 @@ pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
     let sorted_value =
         if let Value::Object(obj) = value { Value::Object(sort_object_keys(obj)) } else { value };
 
-    serde_json::to_string_pretty(&sorted_value)
+    let mut result = serde_json::to_string_pretty(&sorted_value)?;
+    result.push('\n');
+    Ok(result)
 }
 
 fn sort_object_alphabetically(obj: &Map<String, Value>) -> Map<String, Value> {

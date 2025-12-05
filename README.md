@@ -27,10 +27,10 @@ A Rust implementation of [sort-package-json](https://github.com/keithamus/sort-p
 ## Usage
 
 ```bash
-cargo run <path-to-package.json>
+cargo run
 ```
 
-The tool will read, sort, and save the package.json file in place.
+The tool will recursively find all `package.json` files in the current directory and sort them in place.
 
 ### Example
 

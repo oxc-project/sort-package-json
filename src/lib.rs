@@ -1,14 +1,42 @@
 use serde_json::{Map, Value};
 
-pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
+/// Options for controlling JSON formatting when sorting
+#[derive(Debug, Clone)]
+pub struct SortOptions {
+    /// Whether to pretty-print the output JSON
+    pub pretty: bool,
+}
+
+impl Default for SortOptions {
+    fn default() -> Self {
+        Self { pretty: true }
+    }
+}
+
+/// Sorts a package.json string with custom options
+pub fn sort_package_json_with_options(
+    input: &str,
+    options: &SortOptions,
+) -> Result<String, serde_json::Error> {
     let value: Value = serde_json::from_str(input)?;
 
     let sorted_value =
         if let Value::Object(obj) = value { Value::Object(sort_object_keys(obj)) } else { value };
 
-    let mut result = serde_json::to_string_pretty(&sorted_value)?;
-    result.push('\n');
+    let result = if options.pretty {
+        let mut s = serde_json::to_string_pretty(&sorted_value)?;
+        s.push('\n');
+        s
+    } else {
+        serde_json::to_string(&sorted_value)?
+    };
+
     Ok(result)
+}
+
+/// Sorts a package.json string with default options (pretty-printed)
+pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
+    sort_package_json_with_options(input, &SortOptions::default())
 }
 
 fn sort_object_alphabetically(obj: &Map<String, Value>) -> Map<String, Value> {

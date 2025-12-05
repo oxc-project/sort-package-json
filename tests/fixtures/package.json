@@ -1,20 +1,54 @@
 {
-  "version": "1.0.0",
   "name": "test-package",
+  "version": "1.0.0",
+  "description": "A test package for sorting",
+  "keywords": [
+    "test",
+    "example",
+    "sorting"
+  ],
+  "homepage": "https://github.com/test/test-package#readme",
+  "bugs": {
+    "url": "https://github.com/test/test-package/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/test/test-package"
+  },
+  "license": "MIT",
+  "author": "Test Author",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "webpack"
+    "build": "webpack",
+    "lint": "eslint .",
+    "dev": "webpack serve"
   },
   "dependencies": {
     "react": "^18.0.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "axios": "^1.0.0"
   },
   "devDependencies": {
     "jest": "^29.0.0",
-    "webpack": "^5.0.0"
+    "webpack": "^5.0.0",
+    "typescript": "^5.0.0"
   },
-  "keywords": ["test", "example"],
-  "author": "Test Author",
-  "license": "MIT",
-  "description": "A test package for sorting"
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "customField": "this is a custom unknown field",
+  "_custom": "another private field",
+  "_id": "test-package@1.0.0"
 }

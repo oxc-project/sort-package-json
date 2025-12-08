@@ -39,6 +39,41 @@ pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
     sort_package_json_with_options(input, &SortOptions::default())
 }
 
+fn transform_value<F>(value: &Value, transform: F) -> Value
+where
+    F: FnOnce(&Map<String, Value>) -> Map<String, Value>,
+{
+    match value {
+        Value::Object(o) => Value::Object(transform(o)),
+        _ => value.clone(),
+    }
+}
+
+fn transform_array<F>(value: &Value, transform: F) -> Value
+where
+    F: FnOnce(&[Value]) -> Vec<Value>,
+{
+    match value {
+        Value::Array(arr) => Value::Array(transform(arr)),
+        _ => value.clone(),
+    }
+}
+
+fn transform_with_key_order(value: &Value, key_order: &[&str]) -> Value {
+    transform_value(value, |o| sort_object_by_key_order(o, key_order))
+}
+
+fn transform_people_array(value: &Value) -> Value {
+    transform_array(value, |arr| {
+        arr.iter()
+            .map(|v| match v {
+                Value::Object(o) => Value::Object(sort_people_object(o)),
+                _ => v.clone(),
+            })
+            .collect()
+    })
+}
+
 fn sort_object_alphabetically(obj: &Map<String, Value>) -> Map<String, Value> {
     let mut keys: Vec<&String> = obj.keys().collect();
     keys.sort();
@@ -178,118 +213,24 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             "stableVersion" => known.push((4, key, value)),
             "private" => known.push((5, key, value)),
             "description" => known.push((6, key, value)),
-            "categories" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((7, key, transformed));
-            }
-            "keywords" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((8, key, transformed));
-            }
+            "categories" => known.push((7, key, transform_array(&value, sort_array_unique))),
+            "keywords" => known.push((8, key, transform_array(&value, sort_array_unique))),
             "homepage" => known.push((9, key, value)),
-            "bugs" => {
-                let transformed = match &value {
-                    Value::Object(o) => {
-                        Value::Object(sort_object_by_key_order(o, &["url", "email"]))
-                    }
-                    _ => value,
-                };
-                known.push((10, key, transformed));
-            }
-            "repository" => {
-                let transformed = match &value {
-                    Value::Object(o) => {
-                        Value::Object(sort_object_by_key_order(o, &["type", "url"]))
-                    }
-                    _ => value,
-                };
-                known.push((11, key, transformed));
-            }
-            "author" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_people_object(o)),
-                    _ => value,
-                };
-                known.push((12, key, transformed));
-            }
-            "maintainers" => {
-                let transformed = match &value {
-                    Value::Array(arr) => {
-                        let people: Vec<Value> = arr
-                            .iter()
-                            .map(|v| match v {
-                                Value::Object(o) => Value::Object(sort_people_object(o)),
-                                _ => v.clone(),
-                            })
-                            .collect();
-                        Value::Array(people)
-                    }
-                    _ => value,
-                };
-                known.push((13, key, transformed));
-            }
-            "contributors" => {
-                let transformed = match &value {
-                    Value::Array(arr) => {
-                        let people: Vec<Value> = arr
-                            .iter()
-                            .map(|v| match v {
-                                Value::Object(o) => Value::Object(sort_people_object(o)),
-                                _ => v.clone(),
-                            })
-                            .collect();
-                        Value::Array(people)
-                    }
-                    _ => value,
-                };
-                known.push((14, key, transformed));
-            }
-            "donate" => {
-                let transformed = match &value {
-                    Value::Object(o) => {
-                        Value::Object(sort_object_by_key_order(o, &["type", "url"]))
-                    }
-                    _ => value,
-                };
-                known.push((15, key, transformed));
-            }
-            "funding" => {
-                let transformed = match &value {
-                    Value::Object(o) => {
-                        Value::Object(sort_object_by_key_order(o, &["type", "url"]))
-                    }
-                    _ => value,
-                };
-                known.push((16, key, transformed));
-            }
-            "sponsor" => {
-                let transformed = match &value {
-                    Value::Object(o) => {
-                        Value::Object(sort_object_by_key_order(o, &["type", "url"]))
-                    }
-                    _ => value,
-                };
-                known.push((17, key, transformed));
-            }
+            "bugs" => known.push((10, key, transform_with_key_order(&value, &["url", "email"]))),
+            "repository" => known.push((11, key, transform_with_key_order(&value, &["type", "url"]))),
+            "author" => known.push((12, key, transform_value(&value, sort_people_object))),
+            "maintainers" => known.push((13, key, transform_people_array(&value))),
+            "contributors" => known.push((14, key, transform_people_array(&value))),
+            "donate" => known.push((15, key, transform_with_key_order(&value, &["type", "url"]))),
+            "funding" => known.push((16, key, transform_with_key_order(&value, &["type", "url"]))),
+            "sponsor" => known.push((17, key, transform_with_key_order(&value, &["type", "url"]))),
             "license" => known.push((18, key, value)),
             "qna" => known.push((19, key, value)),
             "publisher" => known.push((20, key, value)),
             "sideEffects" => known.push((21, key, value)),
             "type" => known.push((22, key, value)),
             "imports" => known.push((23, key, value)),
-            "exports" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_exports(o)),
-                    _ => value,
-                };
-                known.push((24, key, transformed));
-            }
+            "exports" => known.push((24, key, transform_value(&value, sort_exports))),
             "main" => known.push((25, key, value)),
             "svelte" => known.push((26, key, value)),
             "umd:main" => known.push((27, key, value)),
@@ -318,306 +259,90 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             "example" => known.push((50, key, value)),
             "examplestyle" => known.push((51, key, value)),
             "assets" => known.push((52, key, value)),
-            "bin" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((53, key, transformed));
-            }
+            "bin" => known.push((53, key, transform_value(&value, sort_object_alphabetically))),
             "man" => known.push((54, key, value)),
             "directories" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_by_key_order(
-                        o,
+                known.push((
+                    55,
+                    key,
+                    transform_with_key_order(
+                        &value,
                         &["lib", "bin", "man", "doc", "example", "test"],
-                    )),
-                    _ => value,
-                };
-                known.push((55, key, transformed));
+                    ),
+                ));
             }
-            "files" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((56, key, transformed));
-            }
+            "files" => known.push((56, key, transform_array(&value, sort_array_unique))),
             "workspaces" => known.push((57, key, value)),
             "binary" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_by_key_order(
-                        o,
+                known.push((
+                    58,
+                    key,
+                    transform_with_key_order(
+                        &value,
                         &["module_name", "module_path", "remote_path", "package_name", "host"],
-                    )),
-                    _ => value,
-                };
-                known.push((58, key, transformed));
+                    ),
+                ));
             }
             "scripts" => known.push((59, key, value)),
             "betterScripts" => known.push((60, key, value)),
             "l10n" => known.push((61, key, value)),
             "contributes" => known.push((62, key, value)),
-            "activationEvents" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((63, key, transformed));
-            }
-            "husky" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((64, key, transformed));
-            }
+            "activationEvents" => known.push((63, key, transform_array(&value, sort_array_unique))),
+            "husky" => known.push((64, key, transform_value(&value, sort_object_recursive))),
             "simple-git-hooks" => known.push((65, key, value)),
             "pre-commit" => known.push((66, key, value)),
-            "commitlint" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((67, key, transformed));
-            }
+            "commitlint" => known.push((67, key, transform_value(&value, sort_object_recursive))),
             "lint-staged" => known.push((68, key, value)),
             "nano-staged" => known.push((69, key, value)),
-            "resolutions" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((70, key, transformed));
-            }
-            "overrides" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((71, key, transformed));
-            }
-            "dependencies" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((72, key, transformed));
-            }
-            "devDependencies" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((73, key, transformed));
-            }
+            "resolutions" => known.push((70, key, transform_value(&value, sort_object_alphabetically))),
+            "overrides" => known.push((71, key, transform_value(&value, sort_object_alphabetically))),
+            "dependencies" => known.push((72, key, transform_value(&value, sort_object_alphabetically))),
+            "devDependencies" => known.push((73, key, transform_value(&value, sort_object_alphabetically))),
             "dependenciesMeta" => known.push((74, key, value)),
-            "peerDependencies" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((75, key, transformed));
-            }
+            "peerDependencies" => known.push((75, key, transform_value(&value, sort_object_alphabetically))),
             "peerDependenciesMeta" => known.push((76, key, value)),
-            "optionalDependencies" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((77, key, transformed));
-            }
-            "bundledDependencies" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((78, key, transformed));
-            }
-            "bundleDependencies" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((79, key, transformed));
-            }
-            "extensionPack" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((80, key, transformed));
-            }
-            "extensionDependencies" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((81, key, transformed));
-            }
-            "extensionKind" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((82, key, transformed));
-            }
+            "optionalDependencies" => known.push((77, key, transform_value(&value, sort_object_alphabetically))),
+            "bundledDependencies" => known.push((78, key, transform_array(&value, sort_array_unique))),
+            "bundleDependencies" => known.push((79, key, transform_array(&value, sort_array_unique))),
+            "extensionPack" => known.push((80, key, transform_array(&value, sort_array_unique))),
+            "extensionDependencies" => known.push((81, key, transform_array(&value, sort_array_unique))),
+            "extensionKind" => known.push((82, key, transform_array(&value, sort_array_unique))),
             "flat" => known.push((83, key, value)),
             "packageManager" => known.push((84, key, value)),
-            "config" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((85, key, transformed));
-            }
-            "nodemonConfig" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((86, key, transformed));
-            }
-            "browserify" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((87, key, transformed));
-            }
-            "babel" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((88, key, transformed));
-            }
+            "config" => known.push((85, key, transform_value(&value, sort_object_alphabetically))),
+            "nodemonConfig" => known.push((86, key, transform_value(&value, sort_object_recursive))),
+            "browserify" => known.push((87, key, transform_value(&value, sort_object_recursive))),
+            "babel" => known.push((88, key, transform_value(&value, sort_object_recursive))),
             "browserslist" => known.push((89, key, value)),
-            "xo" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((90, key, transformed));
-            }
-            "prettier" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((91, key, transformed));
-            }
-            "eslintConfig" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((92, key, transformed));
-            }
+            "xo" => known.push((90, key, transform_value(&value, sort_object_recursive))),
+            "prettier" => known.push((91, key, transform_value(&value, sort_object_recursive))),
+            "eslintConfig" => known.push((92, key, transform_value(&value, sort_object_recursive))),
             "eslintIgnore" => known.push((93, key, value)),
             "npmpkgjsonlint" => known.push((94, key, value)),
             "npmPackageJsonLintConfig" => known.push((95, key, value)),
             "npmpackagejsonlint" => known.push((96, key, value)),
             "release" => known.push((97, key, value)),
-            "remarkConfig" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((98, key, transformed));
-            }
-            "stylelint" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((99, key, transformed));
-            }
-            "ava" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((100, key, transformed));
-            }
-            "jest" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((101, key, transformed));
-            }
+            "remarkConfig" => known.push((98, key, transform_value(&value, sort_object_recursive))),
+            "stylelint" => known.push((99, key, transform_value(&value, sort_object_recursive))),
+            "ava" => known.push((100, key, transform_value(&value, sort_object_recursive))),
+            "jest" => known.push((101, key, transform_value(&value, sort_object_recursive))),
             "jest-junit" => known.push((102, key, value)),
             "jest-stare" => known.push((103, key, value)),
-            "mocha" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((104, key, transformed));
-            }
-            "nyc" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((105, key, transformed));
-            }
-            "c8" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((106, key, transformed));
-            }
+            "mocha" => known.push((104, key, transform_value(&value, sort_object_recursive))),
+            "nyc" => known.push((105, key, transform_value(&value, sort_object_recursive))),
+            "c8" => known.push((106, key, transform_value(&value, sort_object_recursive))),
             "tap" => known.push((107, key, value)),
-            "oclif" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((108, key, transformed));
-            }
-            "engines" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((109, key, transformed));
-            }
+            "oclif" => known.push((108, key, transform_value(&value, sort_object_recursive))),
+            "engines" => known.push((109, key, transform_value(&value, sort_object_alphabetically))),
             "engineStrict" => known.push((110, key, value)),
-            "volta" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_recursive(o)),
-                    _ => value,
-                };
-                known.push((111, key, transformed));
-            }
+            "volta" => known.push((111, key, transform_value(&value, sort_object_recursive))),
             "languageName" => known.push((112, key, value)),
             "os" => known.push((113, key, value)),
             "cpu" => known.push((114, key, value)),
-            "libc" => {
-                let transformed = match &value {
-                    Value::Array(arr) => Value::Array(sort_array_unique(arr)),
-                    _ => value,
-                };
-                known.push((115, key, transformed));
-            }
-            "devEngines" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((116, key, transformed));
-            }
+            "libc" => known.push((115, key, transform_array(&value, sort_array_unique))),
+            "devEngines" => known.push((116, key, transform_value(&value, sort_object_alphabetically))),
             "preferGlobal" => known.push((117, key, value)),
-            "publishConfig" => {
-                let transformed = match &value {
-                    Value::Object(o) => Value::Object(sort_object_alphabetically(o)),
-                    _ => value,
-                };
-                known.push((118, key, transformed));
-            }
+            "publishConfig" => known.push((118, key, transform_value(&value, sort_object_alphabetically))),
             "icon" => known.push((119, key, value)),
             "badges" => known.push((120, key, value)),
             "galleryBanner" => known.push((121, key, value)),

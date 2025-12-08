@@ -39,6 +39,7 @@ expression: result
     }
   ],
   "license": "MIT",
+  "main": "./dist/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -53,7 +54,6 @@ expression: result
       "default": "./dist/utils.js"
     }
   },
-  "main": "./dist/index.js",
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
   "files": [

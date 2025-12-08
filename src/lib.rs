@@ -217,7 +217,9 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             "keywords" => known.push((8, key, transform_array(&value, sort_array_unique))),
             "homepage" => known.push((9, key, value)),
             "bugs" => known.push((10, key, transform_with_key_order(&value, &["url", "email"]))),
-            "repository" => known.push((11, key, transform_with_key_order(&value, &["type", "url"]))),
+            "repository" => {
+                known.push((11, key, transform_with_key_order(&value, &["type", "url"])))
+            }
             "author" => known.push((12, key, transform_value(&value, sort_people_object))),
             "maintainers" => known.push((13, key, transform_people_array(&value))),
             "contributors" => known.push((14, key, transform_people_array(&value))),
@@ -294,61 +296,90 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             "commitlint" => known.push((67, key, transform_value(&value, sort_object_recursive))),
             "lint-staged" => known.push((68, key, value)),
             "nano-staged" => known.push((69, key, value)),
-            "resolutions" => known.push((70, key, transform_value(&value, sort_object_alphabetically))),
-            "overrides" => known.push((71, key, transform_value(&value, sort_object_alphabetically))),
-            "dependencies" => known.push((72, key, transform_value(&value, sort_object_alphabetically))),
-            "devDependencies" => known.push((73, key, transform_value(&value, sort_object_alphabetically))),
+            "resolutions" => {
+                known.push((70, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "overrides" => {
+                known.push((71, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "dependencies" => {
+                known.push((72, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "devDependencies" => {
+                known.push((73, key, transform_value(&value, sort_object_alphabetically)))
+            }
             "dependenciesMeta" => known.push((74, key, value)),
-            "peerDependencies" => known.push((75, key, transform_value(&value, sort_object_alphabetically))),
+            "peerDependencies" => {
+                known.push((75, key, transform_value(&value, sort_object_alphabetically)))
+            }
             "peerDependenciesMeta" => known.push((76, key, value)),
-            "optionalDependencies" => known.push((77, key, transform_value(&value, sort_object_alphabetically))),
-            "bundledDependencies" => known.push((78, key, transform_array(&value, sort_array_unique))),
-            "bundleDependencies" => known.push((79, key, transform_array(&value, sort_array_unique))),
-            "extensionPack" => known.push((80, key, transform_array(&value, sort_array_unique))),
-            "extensionDependencies" => known.push((81, key, transform_array(&value, sort_array_unique))),
-            "extensionKind" => known.push((82, key, transform_array(&value, sort_array_unique))),
-            "flat" => known.push((83, key, value)),
-            "packageManager" => known.push((84, key, value)),
-            "config" => known.push((85, key, transform_value(&value, sort_object_alphabetically))),
-            "nodemonConfig" => known.push((86, key, transform_value(&value, sort_object_recursive))),
-            "browserify" => known.push((87, key, transform_value(&value, sort_object_recursive))),
-            "babel" => known.push((88, key, transform_value(&value, sort_object_recursive))),
-            "browserslist" => known.push((89, key, value)),
-            "xo" => known.push((90, key, transform_value(&value, sort_object_recursive))),
-            "prettier" => known.push((91, key, transform_value(&value, sort_object_recursive))),
-            "eslintConfig" => known.push((92, key, transform_value(&value, sort_object_recursive))),
-            "eslintIgnore" => known.push((93, key, value)),
-            "npmpkgjsonlint" => known.push((94, key, value)),
-            "npmPackageJsonLintConfig" => known.push((95, key, value)),
-            "npmpackagejsonlint" => known.push((96, key, value)),
-            "release" => known.push((97, key, value)),
-            "remarkConfig" => known.push((98, key, transform_value(&value, sort_object_recursive))),
-            "stylelint" => known.push((99, key, transform_value(&value, sort_object_recursive))),
-            "ava" => known.push((100, key, transform_value(&value, sort_object_recursive))),
-            "jest" => known.push((101, key, transform_value(&value, sort_object_recursive))),
-            "jest-junit" => known.push((102, key, value)),
-            "jest-stare" => known.push((103, key, value)),
-            "mocha" => known.push((104, key, transform_value(&value, sort_object_recursive))),
-            "nyc" => known.push((105, key, transform_value(&value, sort_object_recursive))),
-            "c8" => known.push((106, key, transform_value(&value, sort_object_recursive))),
-            "tap" => known.push((107, key, value)),
-            "oclif" => known.push((108, key, transform_value(&value, sort_object_recursive))),
-            "engines" => known.push((109, key, transform_value(&value, sort_object_alphabetically))),
-            "engineStrict" => known.push((110, key, value)),
-            "volta" => known.push((111, key, transform_value(&value, sort_object_recursive))),
-            "languageName" => known.push((112, key, value)),
-            "os" => known.push((113, key, value)),
-            "cpu" => known.push((114, key, value)),
-            "libc" => known.push((115, key, transform_array(&value, sort_array_unique))),
-            "devEngines" => known.push((116, key, transform_value(&value, sort_object_alphabetically))),
-            "preferGlobal" => known.push((117, key, value)),
-            "publishConfig" => known.push((118, key, transform_value(&value, sort_object_alphabetically))),
-            "icon" => known.push((119, key, value)),
-            "badges" => known.push((120, key, value)),
-            "galleryBanner" => known.push((121, key, value)),
-            "preview" => known.push((122, key, value)),
-            "markdown" => known.push((123, key, value)),
-            "pnpm" => known.push((124, key, value)),
+            "optionalDependencies" => {
+                known.push((77, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "bundledDependencies" => {
+                known.push((78, key, transform_array(&value, sort_array_unique)))
+            }
+            "bundleDependencies" => {
+                known.push((79, key, transform_array(&value, sort_array_unique)))
+            }
+            "napi" => {
+                known.push((80, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "extensionPack" => known.push((81, key, transform_array(&value, sort_array_unique))),
+            "extensionDependencies" => {
+                known.push((82, key, transform_array(&value, sort_array_unique)))
+            }
+            "extensionKind" => known.push((83, key, transform_array(&value, sort_array_unique))),
+            "flat" => known.push((84, key, value)),
+            "packageManager" => known.push((85, key, value)),
+            "config" => known.push((86, key, transform_value(&value, sort_object_alphabetically))),
+            "nodemonConfig" => {
+                known.push((87, key, transform_value(&value, sort_object_recursive)))
+            }
+            "browserify" => known.push((88, key, transform_value(&value, sort_object_recursive))),
+            "babel" => known.push((89, key, transform_value(&value, sort_object_recursive))),
+            "browserslist" => known.push((90, key, value)),
+            "xo" => known.push((91, key, transform_value(&value, sort_object_recursive))),
+            "prettier" => known.push((92, key, transform_value(&value, sort_object_recursive))),
+            "eslintConfig" => known.push((93, key, transform_value(&value, sort_object_recursive))),
+            "eslintIgnore" => known.push((94, key, value)),
+            "npmpkgjsonlint" => known.push((95, key, value)),
+            "npmPackageJsonLintConfig" => known.push((96, key, value)),
+            "npmpackagejsonlint" => known.push((97, key, value)),
+            "release" => known.push((98, key, value)),
+            "remarkConfig" => known.push((99, key, transform_value(&value, sort_object_recursive))),
+            "stylelint" => known.push((100, key, transform_value(&value, sort_object_recursive))),
+            "ava" => known.push((101, key, transform_value(&value, sort_object_recursive))),
+            "jest" => known.push((102, key, transform_value(&value, sort_object_recursive))),
+            "jest-junit" => known.push((103, key, value)),
+            "jest-stare" => known.push((104, key, value)),
+            "mocha" => known.push((105, key, transform_value(&value, sort_object_recursive))),
+            "nyc" => known.push((106, key, transform_value(&value, sort_object_recursive))),
+            "c8" => known.push((107, key, transform_value(&value, sort_object_recursive))),
+            "tap" => known.push((108, key, value)),
+            "oclif" => known.push((109, key, transform_value(&value, sort_object_recursive))),
+            "engines" => {
+                known.push((110, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "engineStrict" => known.push((111, key, value)),
+            "volta" => known.push((112, key, transform_value(&value, sort_object_recursive))),
+            "languageName" => known.push((113, key, value)),
+            "os" => known.push((114, key, value)),
+            "cpu" => known.push((115, key, value)),
+            "libc" => known.push((116, key, transform_array(&value, sort_array_unique))),
+            "devEngines" => {
+                known.push((117, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "preferGlobal" => known.push((118, key, value)),
+            "publishConfig" => {
+                known.push((119, key, transform_value(&value, sort_object_alphabetically)))
+            }
+            "icon" => known.push((120, key, value)),
+            "badges" => known.push((121, key, value)),
+            "galleryBanner" => known.push((122, key, value)),
+            "preview" => known.push((123, key, value)),
+            "markdown" => known.push((124, key, value)),
+            "pnpm" => known.push((125, key, value)),
             _ => {
                 // Unknown field - check if private
                 if key.starts_with('_') {

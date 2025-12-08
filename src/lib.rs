@@ -39,6 +39,73 @@ pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
     sort_package_json_with_options(input, &SortOptions::default())
 }
 
+/// Declares package.json field ordering with transformations.
+///
+/// This macro generates a match statement that handles known package.json fields
+/// in a specific order using explicit indices. It supports optional transformation
+/// expressions for fields that need special processing.
+///
+/// # Usage
+///
+/// ```ignore
+/// declare_field_order!(key, value, known, non_private, private; [
+///     0 => "$schema",
+///     1 => "name",
+///     7 => "categories" => transform_array(&value, sort_array_unique),
+/// ]);
+/// ```
+///
+/// # Parameters
+///
+/// - `key`: The field name identifier
+/// - `value`: The field value identifier
+/// - `known`: The vector to push known fields to
+/// - `non_private`: The vector to push non-private unknown fields to
+/// - `private`: The vector to push private (underscore-prefixed) fields to
+/// - Followed by an array of field declarations in the format:
+///   - `index => "field_name"` for fields without transformation
+///   - `index => "field_name" => transformation_expr` for fields with transformation
+macro_rules! declare_field_order {
+    (
+        $key:ident, $value:ident, $known:ident, $non_private:ident, $private:ident;
+        [
+            $( $idx:literal => $field_name:literal $( => $transform:expr )? ),* $(,)?
+        ]
+    ) => {
+        {
+            // Compile-time validation: ensure indices are literals
+            $( let _ = $idx; )*
+
+            // Generate the match statement
+            match $key.as_str() {
+                $(
+                    $field_name => {
+                        $known.push((
+                            $idx,
+                            $key,
+                            declare_field_order!(@value $value $(, $transform)?)
+                        ));
+                    },
+                )*
+                _ => {
+                    // Unknown field - check if private
+                    if $key.starts_with('_') {
+                        $private.push(($key, $value));
+                    } else {
+                        $non_private.push(($key, $value));
+                    }
+                }
+            }
+        }
+    };
+
+    // Helper: extract value without transformation
+    (@value $value:ident) => { $value };
+
+    // Helper: extract value with transformation
+    (@value $value:ident, $transform:expr) => { $transform };
+}
+
 fn transform_value<F>(value: &Value, transform: F) -> Value
 where
     F: FnOnce(&Map<String, Value>) -> Map<String, Value>,
@@ -205,190 +272,140 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
 
     // Single pass through all keys using into_iter()
     for (key, value) in obj {
-        match key.as_str() {
-            "$schema" => known.push((0, key, value)),
-            "name" => known.push((1, key, value)),
-            "displayName" => known.push((2, key, value)),
-            "version" => known.push((3, key, value)),
-            "stableVersion" => known.push((4, key, value)),
-            "private" => known.push((5, key, value)),
-            "description" => known.push((6, key, value)),
-            "categories" => known.push((7, key, transform_array(&value, sort_array_unique))),
-            "keywords" => known.push((8, key, transform_array(&value, sort_array_unique))),
-            "homepage" => known.push((9, key, value)),
-            "bugs" => known.push((10, key, transform_with_key_order(&value, &["url", "email"]))),
-            "repository" => {
-                known.push((11, key, transform_with_key_order(&value, &["type", "url"])))
-            }
-            "author" => known.push((12, key, transform_value(&value, sort_people_object))),
-            "maintainers" => known.push((13, key, transform_people_array(&value))),
-            "contributors" => known.push((14, key, transform_people_array(&value))),
-            "donate" => known.push((15, key, transform_with_key_order(&value, &["type", "url"]))),
-            "funding" => known.push((16, key, transform_with_key_order(&value, &["type", "url"]))),
-            "sponsor" => known.push((17, key, transform_with_key_order(&value, &["type", "url"]))),
-            "license" => known.push((18, key, value)),
-            "qna" => known.push((19, key, value)),
-            "publisher" => known.push((20, key, value)),
-            "sideEffects" => known.push((21, key, value)),
-            "type" => known.push((22, key, value)),
-            "imports" => known.push((23, key, value)),
-            "exports" => known.push((24, key, transform_value(&value, sort_exports))),
-            "main" => known.push((25, key, value)),
-            "svelte" => known.push((26, key, value)),
-            "umd:main" => known.push((27, key, value)),
-            "jsdelivr" => known.push((28, key, value)),
-            "unpkg" => known.push((29, key, value)),
-            "module" => known.push((30, key, value)),
-            "esnext" => known.push((31, key, value)),
-            "es2020" => known.push((32, key, value)),
-            "esm2020" => known.push((33, key, value)),
-            "fesm2020" => known.push((34, key, value)),
-            "es2015" => known.push((35, key, value)),
-            "esm2015" => known.push((36, key, value)),
-            "fesm2015" => known.push((37, key, value)),
-            "es5" => known.push((38, key, value)),
-            "esm5" => known.push((39, key, value)),
-            "fesm5" => known.push((40, key, value)),
-            "source" => known.push((41, key, value)),
-            "jsnext:main" => known.push((42, key, value)),
-            "browser" => known.push((43, key, value)),
-            "umd" => known.push((44, key, value)),
-            "react-native" => known.push((45, key, value)),
-            "types" => known.push((46, key, value)),
-            "typesVersions" => known.push((47, key, value)),
-            "typings" => known.push((48, key, value)),
-            "style" => known.push((49, key, value)),
-            "example" => known.push((50, key, value)),
-            "examplestyle" => known.push((51, key, value)),
-            "assets" => known.push((52, key, value)),
-            "bin" => known.push((53, key, transform_value(&value, sort_object_alphabetically))),
-            "man" => known.push((54, key, value)),
-            "directories" => {
-                known.push((
-                    55,
-                    key,
-                    transform_with_key_order(
-                        &value,
-                        &["lib", "bin", "man", "doc", "example", "test"],
-                    ),
-                ));
-            }
-            "files" => known.push((56, key, transform_array(&value, sort_array_unique))),
-            "workspaces" => known.push((57, key, value)),
-            "binary" => {
-                known.push((
-                    58,
-                    key,
-                    transform_with_key_order(
-                        &value,
-                        &["module_name", "module_path", "remote_path", "package_name", "host"],
-                    ),
-                ));
-            }
-            "scripts" => known.push((59, key, value)),
-            "betterScripts" => known.push((60, key, value)),
-            "l10n" => known.push((61, key, value)),
-            "contributes" => known.push((62, key, value)),
-            "activationEvents" => known.push((63, key, transform_array(&value, sort_array_unique))),
-            "husky" => known.push((64, key, transform_value(&value, sort_object_recursive))),
-            "simple-git-hooks" => known.push((65, key, value)),
-            "pre-commit" => known.push((66, key, value)),
-            "commitlint" => known.push((67, key, transform_value(&value, sort_object_recursive))),
-            "lint-staged" => known.push((68, key, value)),
-            "nano-staged" => known.push((69, key, value)),
-            "resolutions" => {
-                known.push((70, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "overrides" => {
-                known.push((71, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "dependencies" => {
-                known.push((72, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "devDependencies" => {
-                known.push((73, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "dependenciesMeta" => known.push((74, key, value)),
-            "peerDependencies" => {
-                known.push((75, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "peerDependenciesMeta" => known.push((76, key, value)),
-            "optionalDependencies" => {
-                known.push((77, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "bundledDependencies" => {
-                known.push((78, key, transform_array(&value, sort_array_unique)))
-            }
-            "bundleDependencies" => {
-                known.push((79, key, transform_array(&value, sort_array_unique)))
-            }
-            "napi" => {
-                known.push((80, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "extensionPack" => known.push((81, key, transform_array(&value, sort_array_unique))),
-            "extensionDependencies" => {
-                known.push((82, key, transform_array(&value, sort_array_unique)))
-            }
-            "extensionKind" => known.push((83, key, transform_array(&value, sort_array_unique))),
-            "flat" => known.push((84, key, value)),
-            "packageManager" => known.push((85, key, value)),
-            "config" => known.push((86, key, transform_value(&value, sort_object_alphabetically))),
-            "nodemonConfig" => {
-                known.push((87, key, transform_value(&value, sort_object_recursive)))
-            }
-            "browserify" => known.push((88, key, transform_value(&value, sort_object_recursive))),
-            "babel" => known.push((89, key, transform_value(&value, sort_object_recursive))),
-            "browserslist" => known.push((90, key, value)),
-            "xo" => known.push((91, key, transform_value(&value, sort_object_recursive))),
-            "prettier" => known.push((92, key, transform_value(&value, sort_object_recursive))),
-            "eslintConfig" => known.push((93, key, transform_value(&value, sort_object_recursive))),
-            "eslintIgnore" => known.push((94, key, value)),
-            "npmpkgjsonlint" => known.push((95, key, value)),
-            "npmPackageJsonLintConfig" => known.push((96, key, value)),
-            "npmpackagejsonlint" => known.push((97, key, value)),
-            "release" => known.push((98, key, value)),
-            "remarkConfig" => known.push((99, key, transform_value(&value, sort_object_recursive))),
-            "stylelint" => known.push((100, key, transform_value(&value, sort_object_recursive))),
-            "ava" => known.push((101, key, transform_value(&value, sort_object_recursive))),
-            "jest" => known.push((102, key, transform_value(&value, sort_object_recursive))),
-            "jest-junit" => known.push((103, key, value)),
-            "jest-stare" => known.push((104, key, value)),
-            "mocha" => known.push((105, key, transform_value(&value, sort_object_recursive))),
-            "nyc" => known.push((106, key, transform_value(&value, sort_object_recursive))),
-            "c8" => known.push((107, key, transform_value(&value, sort_object_recursive))),
-            "tap" => known.push((108, key, value)),
-            "oclif" => known.push((109, key, transform_value(&value, sort_object_recursive))),
-            "engines" => {
-                known.push((110, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "engineStrict" => known.push((111, key, value)),
-            "volta" => known.push((112, key, transform_value(&value, sort_object_recursive))),
-            "languageName" => known.push((113, key, value)),
-            "os" => known.push((114, key, value)),
-            "cpu" => known.push((115, key, value)),
-            "libc" => known.push((116, key, transform_array(&value, sort_array_unique))),
-            "devEngines" => {
-                known.push((117, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "preferGlobal" => known.push((118, key, value)),
-            "publishConfig" => {
-                known.push((119, key, transform_value(&value, sort_object_alphabetically)))
-            }
-            "icon" => known.push((120, key, value)),
-            "badges" => known.push((121, key, value)),
-            "galleryBanner" => known.push((122, key, value)),
-            "preview" => known.push((123, key, value)),
-            "markdown" => known.push((124, key, value)),
-            "pnpm" => known.push((125, key, value)),
-            _ => {
-                // Unknown field - check if private
-                if key.starts_with('_') {
-                    private.push((key, value));
-                } else {
-                    non_private.push((key, value));
-                }
-            }
-        }
+        declare_field_order!(key, value, known, non_private, private; [
+            0 => "$schema",
+            1 => "name",
+            2 => "displayName",
+            3 => "version",
+            4 => "stableVersion",
+            5 => "private",
+            6 => "description",
+            7 => "categories" => transform_array(&value, sort_array_unique),
+            8 => "keywords" => transform_array(&value, sort_array_unique),
+            9 => "homepage",
+            10 => "bugs" => transform_with_key_order(&value, &["url", "email"]),
+            11 => "repository" => transform_with_key_order(&value, &["type", "url"]),
+            12 => "author" => transform_value(&value, sort_people_object),
+            13 => "maintainers" => transform_people_array(&value),
+            14 => "contributors" => transform_people_array(&value),
+            15 => "donate" => transform_with_key_order(&value, &["type", "url"]),
+            16 => "funding" => transform_with_key_order(&value, &["type", "url"]),
+            17 => "sponsor" => transform_with_key_order(&value, &["type", "url"]),
+            18 => "license",
+            19 => "qna",
+            20 => "publisher",
+            21 => "sideEffects",
+            22 => "type",
+            23 => "imports",
+            24 => "exports" => transform_value(&value, sort_exports),
+            25 => "main",
+            26 => "svelte",
+            27 => "umd:main",
+            28 => "jsdelivr",
+            29 => "unpkg",
+            30 => "module",
+            31 => "esnext",
+            32 => "es2020",
+            33 => "esm2020",
+            34 => "fesm2020",
+            35 => "es2015",
+            36 => "esm2015",
+            37 => "fesm2015",
+            38 => "es5",
+            39 => "esm5",
+            40 => "fesm5",
+            41 => "source",
+            42 => "jsnext:main",
+            43 => "browser",
+            44 => "umd",
+            45 => "react-native",
+            46 => "types",
+            47 => "typesVersions",
+            48 => "typings",
+            49 => "style",
+            50 => "example",
+            51 => "examplestyle",
+            52 => "assets",
+            53 => "bin" => transform_value(&value, sort_object_alphabetically),
+            54 => "man",
+            55 => "directories" => transform_with_key_order(
+                &value,
+                &["lib", "bin", "man", "doc", "example", "test"],
+            ),
+            56 => "files" => transform_array(&value, sort_array_unique),
+            57 => "workspaces",
+            58 => "binary" => transform_with_key_order(
+                &value,
+                &["module_name", "module_path", "remote_path", "package_name", "host"],
+            ),
+            59 => "scripts",
+            60 => "betterScripts",
+            61 => "l10n",
+            62 => "contributes",
+            63 => "activationEvents" => transform_array(&value, sort_array_unique),
+            64 => "husky" => transform_value(&value, sort_object_recursive),
+            65 => "simple-git-hooks",
+            66 => "pre-commit",
+            67 => "commitlint" => transform_value(&value, sort_object_recursive),
+            68 => "lint-staged",
+            69 => "nano-staged",
+            70 => "resolutions" => transform_value(&value, sort_object_alphabetically),
+            71 => "overrides" => transform_value(&value, sort_object_alphabetically),
+            72 => "dependencies" => transform_value(&value, sort_object_alphabetically),
+            73 => "devDependencies" => transform_value(&value, sort_object_alphabetically),
+            74 => "dependenciesMeta",
+            75 => "peerDependencies" => transform_value(&value, sort_object_alphabetically),
+            76 => "peerDependenciesMeta",
+            77 => "optionalDependencies" => transform_value(&value, sort_object_alphabetically),
+            78 => "bundledDependencies" => transform_array(&value, sort_array_unique),
+            79 => "bundleDependencies" => transform_array(&value, sort_array_unique),
+            80 => "napi" => transform_value(&value, sort_object_alphabetically),
+            81 => "extensionPack" => transform_array(&value, sort_array_unique),
+            82 => "extensionDependencies" => transform_array(&value, sort_array_unique),
+            83 => "extensionKind" => transform_array(&value, sort_array_unique),
+            84 => "flat",
+            85 => "packageManager",
+            86 => "config" => transform_value(&value, sort_object_alphabetically),
+            87 => "nodemonConfig" => transform_value(&value, sort_object_recursive),
+            88 => "browserify" => transform_value(&value, sort_object_recursive),
+            89 => "babel" => transform_value(&value, sort_object_recursive),
+            90 => "browserslist",
+            91 => "xo" => transform_value(&value, sort_object_recursive),
+            92 => "prettier" => transform_value(&value, sort_object_recursive),
+            93 => "eslintConfig" => transform_value(&value, sort_object_recursive),
+            94 => "eslintIgnore",
+            95 => "npmpkgjsonlint",
+            96 => "npmPackageJsonLintConfig",
+            97 => "npmpackagejsonlint",
+            98 => "release",
+            99 => "remarkConfig" => transform_value(&value, sort_object_recursive),
+            100 => "stylelint" => transform_value(&value, sort_object_recursive),
+            101 => "ava" => transform_value(&value, sort_object_recursive),
+            102 => "jest" => transform_value(&value, sort_object_recursive),
+            103 => "jest-junit",
+            104 => "jest-stare",
+            105 => "mocha" => transform_value(&value, sort_object_recursive),
+            106 => "nyc" => transform_value(&value, sort_object_recursive),
+            107 => "c8" => transform_value(&value, sort_object_recursive),
+            108 => "tap",
+            109 => "oclif" => transform_value(&value, sort_object_recursive),
+            110 => "engines" => transform_value(&value, sort_object_alphabetically),
+            111 => "engineStrict",
+            112 => "volta" => transform_value(&value, sort_object_recursive),
+            113 => "languageName",
+            114 => "os",
+            115 => "cpu",
+            116 => "libc" => transform_array(&value, sort_array_unique),
+            117 => "devEngines" => transform_value(&value, sort_object_alphabetically),
+            118 => "preferGlobal",
+            119 => "publishConfig" => transform_value(&value, sort_object_alphabetically),
+            120 => "icon",
+            121 => "badges",
+            122 => "galleryBanner",
+            123 => "preview",
+            124 => "markdown",
+            125 => "pnpm",
+        ]);
     }
 
     // Sort each category

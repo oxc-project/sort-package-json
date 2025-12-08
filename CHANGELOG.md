@@ -1,0 +1,19 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.0.2](https://github.com/oxc-project/sort-package-json/compare/v0.0.1...v0.0.2) - 2025-12-08
+
+### Other
+
+- Update README field count to 126
+- Use unstable sort for better performance
+- Move main field below type field
+- Add declare_field_order! macro to simplify field ordering
+- Add napi field after bundleDependencies
+- Refactor value transformation with helper functions

@@ -408,10 +408,10 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
         ]);
     }
 
-    // Sort each category
-    known.sort_by_key(|(index, _, _)| *index);
-    non_private.sort_by(|(a, _), (b, _)| a.cmp(b));
-    private.sort_by(|(a, _), (b, _)| a.cmp(b));
+    // Sort each category (using unstable sort for better performance)
+    known.sort_unstable_by_key(|(index, _, _)| *index);
+    non_private.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    private.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
     // Build result map
     let mut result = Map::new();

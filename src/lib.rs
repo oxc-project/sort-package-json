@@ -106,72 +106,64 @@ macro_rules! declare_field_order {
     (@value $value:ident, $transform:expr) => { $transform };
 }
 
-fn transform_value<F>(value: &Value, transform: F) -> Value
+fn transform_value<F>(value: Value, transform: F) -> Value
 where
-    F: FnOnce(&Map<String, Value>) -> Map<String, Value>,
+    F: FnOnce(Map<String, Value>) -> Map<String, Value>,
 {
     match value {
         Value::Object(o) => Value::Object(transform(o)),
-        _ => value.clone(),
+        _ => value,
     }
 }
 
-fn transform_array<F>(value: &Value, transform: F) -> Value
+fn transform_array<F>(value: Value, transform: F) -> Value
 where
-    F: FnOnce(&[Value]) -> Vec<Value>,
+    F: FnOnce(Vec<Value>) -> Vec<Value>,
 {
     match value {
         Value::Array(arr) => Value::Array(transform(arr)),
-        _ => value.clone(),
+        _ => value,
     }
 }
 
-fn transform_with_key_order(value: &Value, key_order: &[&str]) -> Value {
+fn transform_with_key_order(value: Value, key_order: &[&str]) -> Value {
     transform_value(value, |o| sort_object_by_key_order(o, key_order))
 }
 
-fn transform_people_array(value: &Value) -> Value {
+fn transform_people_array(value: Value) -> Value {
     transform_array(value, |arr| {
-        arr.iter()
+        arr.into_iter()
             .map(|v| match v {
                 Value::Object(o) => Value::Object(sort_people_object(o)),
-                _ => v.clone(),
+                _ => v,
             })
             .collect()
     })
 }
 
-fn sort_object_alphabetically(obj: &Map<String, Value>) -> Map<String, Value> {
-    let mut keys: Vec<&String> = obj.keys().collect();
-    keys.sort();
-
-    let mut result = Map::new();
-    for key in keys {
-        if let Some(value) = obj.get(key) {
-            result.insert(key.clone(), value.clone());
-        }
-    }
-    result
+fn sort_object_alphabetically(obj: Map<String, Value>) -> Map<String, Value> {
+    let mut entries: Vec<(String, Value)> = obj.into_iter().collect();
+    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    entries.into_iter().collect()
 }
 
-fn sort_object_recursive(obj: &Map<String, Value>) -> Map<String, Value> {
-    let mut keys: Vec<&String> = obj.keys().collect();
-    keys.sort();
+fn sort_object_recursive(obj: Map<String, Value>) -> Map<String, Value> {
+    let mut entries: Vec<(String, Value)> = obj.into_iter().collect();
+    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
-    let mut result = Map::new();
-    for key in keys {
-        if let Some(value) = obj.get(key) {
+    entries
+        .into_iter()
+        .map(|(key, value)| {
             let transformed_value = match value {
                 Value::Object(nested) => Value::Object(sort_object_recursive(nested)),
-                _ => value.clone(),
+                _ => value,
             };
-            result.insert(key.clone(), transformed_value);
-        }
-    }
-    result
+            (key, transformed_value)
+        })
+        .collect()
 }
 
-fn sort_array_unique(arr: &[Value]) -> Vec<Value> {
+fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
     let mut strings: Vec<String> =
         arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
 
@@ -181,84 +173,75 @@ fn sort_array_unique(arr: &[Value]) -> Vec<Value> {
     strings.into_iter().map(Value::String).collect()
 }
 
-fn sort_object_by_key_order(obj: &Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
+fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
     let mut result = Map::new();
 
     // Add keys in specified order
     for &key in key_order {
-        if let Some(value) = obj.get(key) {
-            result.insert(key.to_string(), value.clone());
+        if let Some(value) = obj.remove(key) {
+            result.insert(key.to_string(), value);
         }
     }
 
     // Add remaining keys alphabetically
-    let mut remaining: Vec<&String> =
-        obj.keys().filter(|k| !key_order.contains(&k.as_str())).collect();
-    remaining.sort();
+    let mut remaining: Vec<(String, Value)> = obj.into_iter().collect();
+    remaining.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
-    for key in remaining {
-        if let Some(value) = obj.get(key) {
-            result.insert(key.clone(), value.clone());
-        }
+    for (key, value) in remaining {
+        result.insert(key, value);
     }
 
     result
 }
 
-fn sort_people_object(obj: &Map<String, Value>) -> Map<String, Value> {
+fn sort_people_object(obj: Map<String, Value>) -> Map<String, Value> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
-fn sort_exports(obj: &Map<String, Value>) -> Map<String, Value> {
+fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
     let mut paths = Vec::new();
     let mut types_conds = Vec::new();
     let mut other_conds = Vec::new();
     let mut default_cond = None;
 
-    for (key, value) in obj.iter() {
+    for (key, value) in obj {
         if key.starts_with('.') {
-            paths.push(key);
+            paths.push((key, value));
         } else if key == "default" {
             default_cond = Some((key, value));
         } else if key == "types" || key.starts_with("types@") {
-            types_conds.push(key);
+            types_conds.push((key, value));
         } else {
-            other_conds.push(key);
+            other_conds.push((key, value));
         }
     }
 
     // Sort each category
-    paths.sort();
-    types_conds.sort();
-    other_conds.sort();
+    paths.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    types_conds.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    other_conds.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
     let mut result = Map::new();
 
     // Add in order: paths, types, others, default
-    for key in paths {
-        if let Some(value) = obj.get(key) {
-            let transformed = match value {
-                Value::Object(nested) => Value::Object(sort_exports(nested)),
-                _ => value.clone(),
-            };
-            result.insert(key.clone(), transformed);
-        }
+    for (key, value) in paths {
+        let transformed = match value {
+            Value::Object(nested) => Value::Object(sort_exports(nested)),
+            _ => value,
+        };
+        result.insert(key, transformed);
     }
 
-    for key in types_conds {
-        if let Some(value) = obj.get(key) {
-            result.insert(key.clone(), value.clone());
-        }
+    for (key, value) in types_conds {
+        result.insert(key, value);
     }
 
-    for key in other_conds {
-        if let Some(value) = obj.get(key) {
-            result.insert(key.clone(), value.clone());
-        }
+    for (key, value) in other_conds {
+        result.insert(key, value);
     }
 
     if let Some((key, value)) = default_cond {
-        result.insert(key.clone(), value.clone());
+        result.insert(key, value);
     }
 
     result
@@ -280,17 +263,17 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             4 => "stableVersion",
             5 => "private",
             6 => "description",
-            7 => "categories" => transform_array(&value, sort_array_unique),
-            8 => "keywords" => transform_array(&value, sort_array_unique),
+            7 => "categories" => transform_array(value, sort_array_unique),
+            8 => "keywords" => transform_array(value, sort_array_unique),
             9 => "homepage",
-            10 => "bugs" => transform_with_key_order(&value, &["url", "email"]),
-            11 => "repository" => transform_with_key_order(&value, &["type", "url"]),
-            12 => "author" => transform_value(&value, sort_people_object),
-            13 => "maintainers" => transform_people_array(&value),
-            14 => "contributors" => transform_people_array(&value),
-            15 => "donate" => transform_with_key_order(&value, &["type", "url"]),
-            16 => "funding" => transform_with_key_order(&value, &["type", "url"]),
-            17 => "sponsor" => transform_with_key_order(&value, &["type", "url"]),
+            10 => "bugs" => transform_with_key_order(value, &["url", "email"]),
+            11 => "repository" => transform_with_key_order(value, &["type", "url"]),
+            12 => "author" => transform_value(value, sort_people_object),
+            13 => "maintainers" => transform_people_array(value),
+            14 => "contributors" => transform_people_array(value),
+            15 => "donate" => transform_with_key_order(value, &["type", "url"]),
+            16 => "funding" => transform_with_key_order(value, &["type", "url"]),
+            17 => "sponsor" => transform_with_key_order(value, &["type", "url"]),
             18 => "license",
             19 => "qna",
             20 => "publisher",
@@ -298,7 +281,7 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             22 => "type",
             23 => "main",
             24 => "imports",
-            25 => "exports" => transform_value(&value, sort_exports),
+            25 => "exports" => transform_value(value, sort_exports),
             26 => "svelte",
             27 => "umd:main",
             28 => "jsdelivr",
@@ -326,79 +309,79 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             50 => "example",
             51 => "examplestyle",
             52 => "assets",
-            53 => "bin" => transform_value(&value, sort_object_alphabetically),
+            53 => "bin" => transform_value(value, sort_object_alphabetically),
             54 => "man",
             55 => "directories" => transform_with_key_order(
-                &value,
+                value,
                 &["lib", "bin", "man", "doc", "example", "test"],
             ),
-            56 => "files" => transform_array(&value, sort_array_unique),
+            56 => "files" => transform_array(value, sort_array_unique),
             57 => "workspaces",
             58 => "binary" => transform_with_key_order(
-                &value,
+                value,
                 &["module_name", "module_path", "remote_path", "package_name", "host"],
             ),
             59 => "scripts",
             60 => "betterScripts",
             61 => "l10n",
             62 => "contributes",
-            63 => "activationEvents" => transform_array(&value, sort_array_unique),
-            64 => "husky" => transform_value(&value, sort_object_recursive),
+            63 => "activationEvents" => transform_array(value, sort_array_unique),
+            64 => "husky" => transform_value(value, sort_object_recursive),
             65 => "simple-git-hooks",
             66 => "pre-commit",
-            67 => "commitlint" => transform_value(&value, sort_object_recursive),
+            67 => "commitlint" => transform_value(value, sort_object_recursive),
             68 => "lint-staged",
             69 => "nano-staged",
-            70 => "resolutions" => transform_value(&value, sort_object_alphabetically),
-            71 => "overrides" => transform_value(&value, sort_object_alphabetically),
-            72 => "dependencies" => transform_value(&value, sort_object_alphabetically),
-            73 => "devDependencies" => transform_value(&value, sort_object_alphabetically),
+            70 => "resolutions" => transform_value(value, sort_object_alphabetically),
+            71 => "overrides" => transform_value(value, sort_object_alphabetically),
+            72 => "dependencies" => transform_value(value, sort_object_alphabetically),
+            73 => "devDependencies" => transform_value(value, sort_object_alphabetically),
             74 => "dependenciesMeta",
-            75 => "peerDependencies" => transform_value(&value, sort_object_alphabetically),
+            75 => "peerDependencies" => transform_value(value, sort_object_alphabetically),
             76 => "peerDependenciesMeta",
-            77 => "optionalDependencies" => transform_value(&value, sort_object_alphabetically),
-            78 => "bundledDependencies" => transform_array(&value, sort_array_unique),
-            79 => "bundleDependencies" => transform_array(&value, sort_array_unique),
-            80 => "napi" => transform_value(&value, sort_object_alphabetically),
-            81 => "extensionPack" => transform_array(&value, sort_array_unique),
-            82 => "extensionDependencies" => transform_array(&value, sort_array_unique),
-            83 => "extensionKind" => transform_array(&value, sort_array_unique),
+            77 => "optionalDependencies" => transform_value(value, sort_object_alphabetically),
+            78 => "bundledDependencies" => transform_array(value, sort_array_unique),
+            79 => "bundleDependencies" => transform_array(value, sort_array_unique),
+            80 => "napi" => transform_value(value, sort_object_alphabetically),
+            81 => "extensionPack" => transform_array(value, sort_array_unique),
+            82 => "extensionDependencies" => transform_array(value, sort_array_unique),
+            83 => "extensionKind" => transform_array(value, sort_array_unique),
             84 => "flat",
             85 => "packageManager",
-            86 => "config" => transform_value(&value, sort_object_alphabetically),
-            87 => "nodemonConfig" => transform_value(&value, sort_object_recursive),
-            88 => "browserify" => transform_value(&value, sort_object_recursive),
-            89 => "babel" => transform_value(&value, sort_object_recursive),
+            86 => "config" => transform_value(value, sort_object_alphabetically),
+            87 => "nodemonConfig" => transform_value(value, sort_object_recursive),
+            88 => "browserify" => transform_value(value, sort_object_recursive),
+            89 => "babel" => transform_value(value, sort_object_recursive),
             90 => "browserslist",
-            91 => "xo" => transform_value(&value, sort_object_recursive),
-            92 => "prettier" => transform_value(&value, sort_object_recursive),
-            93 => "eslintConfig" => transform_value(&value, sort_object_recursive),
+            91 => "xo" => transform_value(value, sort_object_recursive),
+            92 => "prettier" => transform_value(value, sort_object_recursive),
+            93 => "eslintConfig" => transform_value(value, sort_object_recursive),
             94 => "eslintIgnore",
             95 => "npmpkgjsonlint",
             96 => "npmPackageJsonLintConfig",
             97 => "npmpackagejsonlint",
             98 => "release",
-            99 => "remarkConfig" => transform_value(&value, sort_object_recursive),
-            100 => "stylelint" => transform_value(&value, sort_object_recursive),
-            101 => "ava" => transform_value(&value, sort_object_recursive),
-            102 => "jest" => transform_value(&value, sort_object_recursive),
+            99 => "remarkConfig" => transform_value(value, sort_object_recursive),
+            100 => "stylelint" => transform_value(value, sort_object_recursive),
+            101 => "ava" => transform_value(value, sort_object_recursive),
+            102 => "jest" => transform_value(value, sort_object_recursive),
             103 => "jest-junit",
             104 => "jest-stare",
-            105 => "mocha" => transform_value(&value, sort_object_recursive),
-            106 => "nyc" => transform_value(&value, sort_object_recursive),
-            107 => "c8" => transform_value(&value, sort_object_recursive),
+            105 => "mocha" => transform_value(value, sort_object_recursive),
+            106 => "nyc" => transform_value(value, sort_object_recursive),
+            107 => "c8" => transform_value(value, sort_object_recursive),
             108 => "tap",
-            109 => "oclif" => transform_value(&value, sort_object_recursive),
-            110 => "engines" => transform_value(&value, sort_object_alphabetically),
+            109 => "oclif" => transform_value(value, sort_object_recursive),
+            110 => "engines" => transform_value(value, sort_object_alphabetically),
             111 => "engineStrict",
-            112 => "volta" => transform_value(&value, sort_object_recursive),
+            112 => "volta" => transform_value(value, sort_object_recursive),
             113 => "languageName",
             114 => "os",
             115 => "cpu",
-            116 => "libc" => transform_array(&value, sort_array_unique),
-            117 => "devEngines" => transform_value(&value, sort_object_alphabetically),
+            116 => "libc" => transform_array(value, sort_array_unique),
+            117 => "devEngines" => transform_value(value, sort_object_alphabetically),
             118 => "preferGlobal",
-            119 => "publishConfig" => transform_value(&value, sort_object_alphabetically),
+            119 => "publishConfig" => transform_value(value, sort_object_alphabetically),
             120 => "icon",
             121 => "badges",
             122 => "galleryBanner",

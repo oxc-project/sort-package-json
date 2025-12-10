@@ -7,10 +7,37 @@ use ignore::WalkBuilder;
 
 #[allow(clippy::print_stderr)]
 fn main() {
-    let search_path = env::current_dir().unwrap_or_else(|err| {
-        eprintln!("Error getting current directory: {}", err);
+    let args: Vec<String> = env::args().collect();
+
+    // Parse command line arguments
+    let search_path = if args.len() > 1 {
+        let arg = &args[1];
+        if arg == "--help" || arg == "-h" {
+            eprintln!("Usage: {} [PATH]", args[0]);
+            eprintln!(
+                "\nRecursively finds and sorts all package.json files in the specified directory."
+            );
+            eprintln!("\nArguments:");
+            eprintln!("  PATH    Directory to search (defaults to current directory)");
+            process::exit(0);
+        }
+        Path::new(arg).to_path_buf()
+    } else {
+        env::current_dir().unwrap_or_else(|err| {
+            eprintln!("Error getting current directory: {}", err);
+            process::exit(1);
+        })
+    };
+
+    if !search_path.exists() {
+        eprintln!("Error: Path does not exist: {}", search_path.display());
         process::exit(1);
-    });
+    }
+
+    if !search_path.is_dir() {
+        eprintln!("Error: Path is not a directory: {}", search_path.display());
+        process::exit(1);
+    }
 
     // Find all package.json files
     let mut found_files = 0;

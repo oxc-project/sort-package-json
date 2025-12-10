@@ -47,11 +47,11 @@ undocumented_unsafe_blocks = "warn"
 infinite_loop = "warn"
 
 [dependencies]
-ignore = "0.4"
 serde_json = { version = "1.0", features = ["preserve_order"] }
 
 [dev-dependencies]
 criterion2 = { version = "3", default-features = false }
+ignore = "0.4"
 insta = "1.41"
 
 [[bench]]

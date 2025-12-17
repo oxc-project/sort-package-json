@@ -167,7 +167,7 @@ fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
     let mut strings: Vec<String> =
         arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
 
-    strings.sort();
+    strings.sort_unstable();
     strings.dedup();
 
     strings.into_iter().map(Value::String).collect()
@@ -178,11 +178,11 @@ fn sort_paths_naturally(arr: Vec<Value>) -> Vec<Value> {
         arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
 
     // Remove duplicates first (case-sensitive)
-    strings.sort();
+    strings.sort_unstable();
     strings.dedup();
 
     // Sort by depth first, then alphabetically (case-insensitive)
-    strings.sort_by(|a, b| {
+    strings.sort_unstable_by(|a, b| {
         let depth_a = a.matches('/').count();
         let depth_b = b.matches('/').count();
 

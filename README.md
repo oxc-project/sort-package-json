@@ -18,7 +18,7 @@ A Rust implementation of [sort-package-json](https://github.com/keithamus/sort-p
 
 ## Features
 
-- **Sorts top-level fields** according to npm ecosystem conventions (126 predefined fields)
+- **Sorts top-level fields** according to npm ecosystem conventions (138 predefined fields)
 - **Preserves all data** - only reorders fields, never modifies values
 - **Fast and safe** - pure Rust implementation with no unsafe code
 - **Idempotent** - sorting multiple times produces the same result
@@ -60,7 +60,7 @@ Running `cargo run package.json` produces:
 
 Fields are sorted according to this priority:
 
-1. **Known fields** - 126 predefined fields organized into 12 logical groups
+1. **Known fields** - 138 predefined fields organized into 12 logical groups
 2. **Unknown fields** - any custom fields sorted alphabetically
 3. **Private fields** - fields starting with `_` sorted alphabetically at the end
 
@@ -69,7 +69,7 @@ The complete field order is based on both the [original sort-package-json](https
 ### Known Field Groups
 
 #### 1. Core Package Metadata
-`$schema`, `name`, `displayName`, `version`, `stableVersion`, `private`, `description`, `categories`, `keywords`, `homepage`, `bugs`
+`$schema`, `name`, `displayName`, `version`, `stableVersion`, `gitHead`, `private`, `description`, `categories`, `keywords`, `homepage`, `bugs`
 
 #### 2. License & People
 `license`, `author`, `maintainers`, `contributors`
@@ -81,7 +81,7 @@ The complete field order is based on both the [original sort-package-json](https
 `man`, `style`, `example`, `examplestyle`, `assets`, `bin`, `source`, `directories`, `workspaces`, `binary`, `files`, `os`, `cpu`, `libc`
 
 #### 5. Package Entry Points
-`type`, `sideEffects`, `main`, `module`, `browser`, `types`, `typings`, `typesVersions`, `react-native`, `svelte`, `unpkg`, `jsdelivr`, `jsnext:main`, `umd`, `umd:main`, `es5`, `esm5`, `fesm5`, `es2015`, `esm2015`, `fesm2015`, `es2020`, `esm2020`, `fesm2020`, `esnext`, `imports`, `exports`, `publishConfig`
+`type`, `sideEffects`, `main`, `module`, `browser`, `types`, `typings`, `typesVersions`, `typeScriptVersion`, `typesPublisherContentHash`, `react-native`, `svelte`, `unpkg`, `jsdelivr`, `jsnext:main`, `umd`, `umd:main`, `es5`, `esm5`, `fesm5`, `es2015`, `esm2015`, `fesm2015`, `es2020`, `esm2020`, `fesm2020`, `esnext`, `imports`, `exports`, `publishConfig`
 
 #### 6. Scripts
 `scripts`, `betterScripts`
@@ -96,10 +96,10 @@ The complete field order is based on both the [original sort-package-json](https
 `l10n`, `contributes`, `activationEvents`, `extensionPack`, `extensionDependencies`, `extensionKind`, `icon`, `badges`, `galleryBanner`, `preview`, `markdown`
 
 #### 10. Build & Tool Configuration
-`napi`, `flat`, `config`, `nodemonConfig`, `browserify`, `babel`, `browserslist`, `xo`, `prettier`, `eslintConfig`, `eslintIgnore`, `npmpkgjsonlint`, `npmPackageJsonLintConfig`, `npmpackagejsonlint`, `release`, `remarkConfig`, `stylelint`
+`napi`, `flat`, `config`, `nodemonConfig`, `browserify`, `babel`, `browserslist`, `xo`, `prettier`, `eslintConfig`, `eslintIgnore`, `standard`, `npmpkgjsonlint`, `npmPackageJsonLintConfig`, `npmpackagejsonlint`, `release`, `auto-changelog`, `remarkConfig`, `stylelint`, `typescript`, `typedoc`, `tshy`, `tsdown`, `size-limit`
 
 #### 11. Testing
-`ava`, `jest`, `jest-junit`, `jest-stare`, `mocha`, `nyc`, `c8`, `tap`, `oclif`
+`ava`, `jest`, `jest-junit`, `jest-stare`, `mocha`, `nyc`, `c8`, `tap`, `tsd`, `typeCoverage`, `oclif`
 
 #### 12. Runtime & Package Manager
 `languageName`, `preferGlobal`, `devEngines`, `engines`, `engineStrict`, `volta`, `packageManager`, `pnpm`

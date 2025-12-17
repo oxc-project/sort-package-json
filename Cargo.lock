@@ -503,7 +503,7 @@ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "sort-package-json"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "criterion2",
  "ignore",

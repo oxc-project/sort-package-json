@@ -46,8 +46,8 @@ expression: result
     "src"
   ],
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "module": "./dist/index.esm.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

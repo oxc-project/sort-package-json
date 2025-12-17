@@ -78,10 +78,10 @@ The complete field order is based on both the [original sort-package-json](https
 `repository`, `funding`, `donate`, `sponsor`, `qna`, `publisher`
 
 #### 4. Package Content & Distribution
-`man`, `style`, `example`, `examplestyle`, `assets`, `directories`, `workspaces`, `binary`, `files`, `os`, `cpu`, `libc`
+`man`, `style`, `example`, `examplestyle`, `assets`, `bin`, `source`, `directories`, `workspaces`, `binary`, `files`, `os`, `cpu`, `libc`
 
 #### 5. Package Entry Points
-`type`, `main`, `browser`, `bin`, `umd`, `types`, `typings`, `typesVersions`, `react-native`, `svelte`, `source`, `jsnext:main`, `umd:main`, `jsdelivr`, `unpkg`, `module`, `esnext`, `es2020`, `esm2020`, `fesm2020`, `es2015`, `esm2015`, `fesm2015`, `es5`, `esm5`, `fesm5`, `sideEffects`, `imports`, `exports`, `publishConfig`
+`type`, `sideEffects`, `main`, `module`, `browser`, `types`, `typings`, `typesVersions`, `react-native`, `svelte`, `unpkg`, `jsdelivr`, `jsnext:main`, `umd`, `umd:main`, `es5`, `esm5`, `fesm5`, `es2015`, `esm2015`, `fesm2015`, `es2020`, `esm2020`, `fesm2020`, `esnext`, `imports`, `exports`, `publishConfig`
 
 #### 6. Scripts
 `scripts`, `betterScripts`

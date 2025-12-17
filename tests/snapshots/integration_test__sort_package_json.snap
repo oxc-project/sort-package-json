@@ -40,10 +40,14 @@ expression: result
     "url": "https://github.com/test/test-package"
   },
   "files": [
+    "dist",
     "LICENSE",
     "README.md",
-    "dist",
-    "src"
+    "src",
+    "bin/cli.js",
+    "src/index.js",
+    "src/generated/constants.js",
+    "src/utils/helper.js"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",

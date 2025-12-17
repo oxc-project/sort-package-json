@@ -173,6 +173,32 @@ fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
     strings.into_iter().map(Value::String).collect()
 }
 
+fn sort_paths_naturally(arr: Vec<Value>) -> Vec<Value> {
+    let mut strings: Vec<String> =
+        arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+
+    // Remove duplicates first (case-sensitive)
+    strings.sort();
+    strings.dedup();
+
+    // Sort by depth first, then alphabetically (case-insensitive)
+    strings.sort_by(|a, b| {
+        let depth_a = a.matches('/').count();
+        let depth_b = b.matches('/').count();
+
+        // Primary: compare by depth (shallower paths first)
+        match depth_a.cmp(&depth_b) {
+            std::cmp::Ordering::Equal => {
+                // Secondary: case-insensitive alphabetical comparison
+                a.to_lowercase().cmp(&b.to_lowercase())
+            }
+            other => other,
+        }
+    });
+
+    strings.into_iter().map(Value::String).collect()
+}
+
 fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
     let mut result = Map::new();
 
@@ -299,7 +325,7 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             29 => "directories" => transform_with_key_order(value, &["lib", "bin", "man", "doc", "example", "test"]),
             30 => "workspaces",
             31 => "binary" => transform_with_key_order(value, &["module_name", "module_path", "remote_path", "package_name", "host"]),
-            32 => "files" => transform_array(value, sort_array_unique),
+            32 => "files" => transform_array(value, sort_paths_naturally),
             33 => "os",
             34 => "cpu",
             35 => "libc" => transform_array(value, sort_array_unique),

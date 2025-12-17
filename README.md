@@ -60,11 +60,49 @@ Running `cargo run package.json` produces:
 
 Fields are sorted according to this priority:
 
-1. **Known fields** - 126 predefined fields in standard order (name, version, description, keywords, ...)
+1. **Known fields** - 126 predefined fields organized into 12 logical groups
 2. **Unknown fields** - any custom fields sorted alphabetically
 3. **Private fields** - fields starting with `_` sorted alphabetically at the end
 
 The complete field order is based on both the [original sort-package-json](https://github.com/keithamus/sort-package-json/blob/main/index.js) and [prettier's package.json sorting](https://github.com/un-ts/prettier/blob/master/packages/pkg/src/rules/sort.ts) implementations.
+
+### Known Field Groups
+
+#### 1. Core Package Metadata
+`$schema`, `name`, `displayName`, `version`, `stableVersion`, `private`, `description`, `categories`, `keywords`, `homepage`, `bugs`
+
+#### 2. License & People
+`license`, `author`, `maintainers`, `contributors`
+
+#### 3. Repository & Funding
+`repository`, `funding`, `donate`, `sponsor`, `qna`, `publisher`
+
+#### 4. Package Content & Distribution
+`man`, `style`, `example`, `examplestyle`, `assets`, `bin`, `source`, `directories`, `workspaces`, `binary`, `files`, `os`, `cpu`, `libc`
+
+#### 5. Package Entry Points
+`type`, `sideEffects`, `main`, `module`, `browser`, `types`, `typings`, `typesVersions`, `react-native`, `svelte`, `unpkg`, `jsdelivr`, `jsnext:main`, `umd`, `umd:main`, `es5`, `esm5`, `fesm5`, `es2015`, `esm2015`, `fesm2015`, `es2020`, `esm2020`, `fesm2020`, `esnext`, `imports`, `exports`, `publishConfig`
+
+#### 6. Scripts
+`scripts`, `betterScripts`
+
+#### 7. Dependencies
+`dependencies`, `devDependencies`, `dependenciesMeta`, `peerDependencies`, `peerDependenciesMeta`, `optionalDependencies`, `bundledDependencies`, `bundleDependencies`, `resolutions`, `overrides`
+
+#### 8. Git Hooks & Commit Tools
+`husky`, `simple-git-hooks`, `pre-commit`, `lint-staged`, `nano-staged`, `commitlint`
+
+#### 9. VSCode Extension Specific
+`l10n`, `contributes`, `activationEvents`, `extensionPack`, `extensionDependencies`, `extensionKind`, `icon`, `badges`, `galleryBanner`, `preview`, `markdown`
+
+#### 10. Build & Tool Configuration
+`napi`, `flat`, `config`, `nodemonConfig`, `browserify`, `babel`, `browserslist`, `xo`, `prettier`, `eslintConfig`, `eslintIgnore`, `npmpkgjsonlint`, `npmPackageJsonLintConfig`, `npmpackagejsonlint`, `release`, `remarkConfig`, `stylelint`
+
+#### 11. Testing
+`ava`, `jest`, `jest-junit`, `jest-stare`, `mocha`, `nyc`, `c8`, `tap`, `oclif`
+
+#### 12. Runtime & Package Manager
+`languageName`, `preferGlobal`, `devEngines`, `engines`, `engineStrict`, `volta`, `packageManager`, `pnpm`
 
 ## Why Not simd-json?
 

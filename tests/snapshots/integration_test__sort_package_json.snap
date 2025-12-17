@@ -47,6 +47,10 @@ expression: result
       "import": "./dist/index.esm.js",
       "default": "./dist/index.js"
     },
+    "./paths-should-keep-b_a": {
+      "b": "./index.cjs",
+      "a": "./index.js"
+    },
     "./package.json": "./package.json",
     "./utils": {
       "types": "./dist/utils.d.ts",

@@ -43,6 +43,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.js"
     },
+    "./paths-should-keep-b_a": {
+      "b": "./index.cjs",
+      "a": "./index.js"
+    },
     "./package.json": "./package.json",
     "./utils": {
       "import": "./dist/utils.esm.js",

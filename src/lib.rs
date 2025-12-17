@@ -163,40 +163,44 @@ fn sort_object_recursive(obj: Map<String, Value>) -> Map<String, Value> {
         .collect()
 }
 
-fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
-    let mut strings: Vec<String> =
-        arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
+    // Filter non-strings in-place (same behavior as filter_map)
+    arr.retain(|v| v.is_string());
 
-    strings.sort_unstable();
-    strings.dedup();
+    // Sort in-place by comparing string values (zero allocations)
+    arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
 
-    strings.into_iter().map(Value::String).collect()
+    // Remove consecutive duplicates in-place
+    arr.dedup_by(|a, b| a.as_str() == b.as_str());
+
+    arr
 }
 
-fn sort_paths_naturally(arr: Vec<Value>) -> Vec<Value> {
-    let mut strings: Vec<String> =
-        arr.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+fn sort_paths_naturally(mut arr: Vec<Value>) -> Vec<Value> {
+    // Filter and deduplicate in-place
+    arr.retain(|v| v.is_string());
+    arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
+    arr.dedup_by(|a, b| a.as_str() == b.as_str());
 
-    // Remove duplicates first (case-sensitive)
-    strings.sort_unstable();
-    strings.dedup();
+    // Pre-compute depth and lowercase ONCE per string (not on every comparison)
+    // Move Values from arr into tuples (no copying)
+    let mut with_keys: Vec<(usize, String, Value)> = arr
+        .into_iter()
+        .map(|v| {
+            let s = v.as_str().unwrap();
+            let depth = s.matches('/').count();
+            let lowercase = s.to_lowercase();
+            (depth, lowercase, v)
+        })
+        .collect();
 
-    // Sort by depth first, then alphabetically (case-insensitive)
-    strings.sort_unstable_by(|a, b| {
-        let depth_a = a.matches('/').count();
-        let depth_b = b.matches('/').count();
-
-        // Primary: compare by depth (shallower paths first)
-        match depth_a.cmp(&depth_b) {
-            std::cmp::Ordering::Equal => {
-                // Secondary: case-insensitive alphabetical comparison
-                a.to_lowercase().cmp(&b.to_lowercase())
-            }
-            other => other,
-        }
+    // Sort using pre-computed keys (zero allocations during comparison)
+    with_keys.sort_unstable_by(|(depth_a, lower_a, _), (depth_b, lower_b, _)| {
+        depth_a.cmp(depth_b).then_with(|| lower_a.cmp(lower_b))
     });
 
-    strings.into_iter().map(Value::String).collect()
+    // Extract Values (move out of tuples, no copying)
+    with_keys.into_iter().map(|(_, _, v)| v).collect()
 }
 
 fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {

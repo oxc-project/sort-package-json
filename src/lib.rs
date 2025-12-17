@@ -216,11 +216,6 @@ fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
         }
     }
 
-    // Sort each category
-    paths.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-    types_conds.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-    other_conds.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
     let mut result = Map::new();
 
     // Add in order: paths, types, others, default
@@ -233,15 +228,27 @@ fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
     }
 
     for (key, value) in types_conds {
-        result.insert(key, value);
+        let transformed = match value {
+            Value::Object(nested) => Value::Object(sort_exports(nested)),
+            _ => value,
+        };
+        result.insert(key, transformed);
     }
 
     for (key, value) in other_conds {
-        result.insert(key, value);
+        let transformed = match value {
+            Value::Object(nested) => Value::Object(sort_exports(nested)),
+            _ => value,
+        };
+        result.insert(key, transformed);
     }
 
     if let Some((key, value)) = default_cond {
-        result.insert(key, value);
+        let transformed = match value {
+            Value::Object(nested) => Value::Object(sort_exports(nested)),
+            _ => value,
+        };
+        result.insert(key, transformed);
     }
 
     result

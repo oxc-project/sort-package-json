@@ -43,9 +43,13 @@ expression: result
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs",
+      "import": "./dist/index.esm.js",
       "default": "./dist/index.js"
+    },
+    "./paths-should-keep-b_a": {
+      "b": "./index.cjs",
+      "a": "./index.js"
     },
     "./package.json": "./package.json",
     "./utils": {

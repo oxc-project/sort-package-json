@@ -81,7 +81,7 @@ The complete field order is based on both the [original sort-package-json](https
 `man`, `style`, `example`, `examplestyle`, `assets`, `directories`, `workspaces`, `binary`, `files`, `os`, `cpu`, `libc`
 
 #### 5. Package Entry Points
-`sideEffects`, `type`, `main`, `browser`, `bin`, `umd`, `types`, `typings`, `typesVersions`, `react-native`, `svelte`, `source`, `jsnext:main`, `umd:main`, `jsdelivr`, `unpkg`, `module`, `esnext`, `es2020`, `esm2020`, `fesm2020`, `es2015`, `esm2015`, `fesm2015`, `es5`, `esm5`, `fesm5`, `imports`, `exports`, `publishConfig`
+`type`, `main`, `browser`, `bin`, `umd`, `types`, `typings`, `typesVersions`, `react-native`, `svelte`, `source`, `jsnext:main`, `umd:main`, `jsdelivr`, `unpkg`, `module`, `esnext`, `es2020`, `esm2020`, `fesm2020`, `es2015`, `esm2015`, `fesm2015`, `es5`, `esm5`, `fesm5`, `sideEffects`, `imports`, `exports`, `publishConfig`
 
 #### 6. Scripts
 `scripts`, `betterScripts`

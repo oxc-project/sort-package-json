@@ -17,10 +17,7 @@ expression: result
     "url": "https://github.com/test/test-package/issues",
     "email": "bugs@example.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/test/test-package"
-  },
+  "license": "MIT",
   "author": {
     "name": "Test Author",
     "email": "author@example.com",
@@ -38,8 +35,19 @@ expression: result
       "url": "https://maintainer2.com"
     }
   ],
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/test/test-package"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist",
+    "src"
+  ],
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.esm.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -58,14 +66,9 @@ expression: result
       "default": "./dist/utils.js"
     }
   },
-  "module": "./dist/index.esm.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist",
-    "src"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "jest",
     "posttest": "echo 'Tests complete'",
@@ -96,9 +99,6 @@ expression: result
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "customField": "this is a custom unknown field",
   "_custom": "another private field",

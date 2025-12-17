@@ -131,13 +131,14 @@ fn transform_with_key_order(value: Value, key_order: &[&str]) -> Value {
 }
 
 fn transform_people_array(value: Value) -> Value {
-    transform_array(value, |arr| {
-        arr.into_iter()
-            .map(|v| match v {
-                Value::Object(o) => Value::Object(sort_people_object(o)),
-                _ => v,
-            })
-            .collect()
+    transform_array(value, |mut arr| {
+        // Transform objects in-place instead of map().collect()
+        for v in &mut arr {
+            if let Value::Object(obj) = std::mem::take(v) {
+                *v = Value::Object(sort_people_object(obj));
+            }
+        }
+        arr
     })
 }
 
@@ -204,12 +205,13 @@ fn sort_paths_naturally(mut arr: Vec<Value>) -> Vec<Value> {
 }
 
 fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
-    let mut result = Map::new();
+    // Pre-allocate capacity to avoid reallocations
+    let mut result = Map::with_capacity(obj.len());
 
     // Add keys in specified order
     for &key in key_order {
         if let Some(value) = obj.remove(key) {
-            result.insert(key.to_string(), value);
+            result.insert(key.into(), value);
         }
     }
 

@@ -43,7 +43,11 @@ expression: result
     "dist",
     "LICENSE",
     "README.md",
-    "src"
+    "src",
+    "bin/cli.js",
+    "src/index.js",
+    "src/generated/constants.js",
+    "src/utils/helper.js"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",

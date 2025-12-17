@@ -58,11 +58,15 @@
   "module": "./dist/index.esm.js",
   "types": "./dist/index.d.ts",
   "files": [
+    "src/generated/constants.js",
     "src",
     "dist",
+    "src/index.js",
     "README.md",
+    "src/utils/helper.js",
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "bin/cli.js"
   ],
   "scripts": {
     "test": "jest",

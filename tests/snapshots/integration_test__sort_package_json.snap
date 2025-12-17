@@ -40,9 +40,9 @@ expression: result
     "url": "https://github.com/test/test-package"
   },
   "files": [
+    "dist",
     "LICENSE",
     "README.md",
-    "dist",
     "src"
   ],
   "main": "./dist/index.js",

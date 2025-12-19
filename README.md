@@ -106,46 +106,10 @@ The complete field order is based on both the [original sort-package-json](https
 
 ## Why Not simd-json?
 
-While investigating performance optimizations, we considered using [simd-json](https://github.com/simd-lite/simd-json) instead of serde_json. However, simd-json is not suitable for this project due to several technical limitations:
+We use serde_json instead of [simd-json](https://github.com/simd-lite/simd-json) because:
 
-### 1. No preserve_order Support
-
-Our sorting algorithm requires maintaining custom insertion order. We insert fields in a specific sequence (known fields � unknown fields � private fields) and need the Map to preserve that exact order during serialization.
-
-simd-json lacks the equivalent of serde_json's `preserve_order` feature, which uses IndexMap to maintain insertion order. Without this, the Map implementation would re-sort keys alphabetically, completely breaking our field ordering logic.
-
-**Status**: Blocking issue - makes simd-json incompatible with our core functionality.
-
-### 2. Wrong Performance Profile
-
-simd-json is optimized for **large files** (1MB+) through SIMD acceleration, but is **slower for small files** due to SIMD overhead:
-
-- For small objects: serde_json is **1.6x faster**
-- For large objects (1.8MB): simd-json is **3x faster**
-
-Package.json files are typically **1-5 KB**, rarely exceeding 50 KB even for large monorepos. This makes them squarely in the "small file" category where simd-json would actually **decrease performance**.
-
-### 3. Platform Compatibility Issues
-
-simd-json does not work correctly on **big-endian architectures** (e.g., s390x/IBM Z mainframe). Projects using simd-json must implement conditional compilation to fall back to serde_json on big-endian platforms.
-
-See [simd-json issue #437](https://github.com/simd-lite/simd-json/issues/437) for details.
-
-### 4. Additional Complexity
-
-- Contains substantial **unsafe code** (C++ port)
-- Requires specific allocators (mimalloc/jemalloc) for optimal performance
-- More complex dependency tree
-
-### Conclusion
-
-For a package.json sorting tool, **serde_json is the optimal choice**:
-
--  Faster for small files (our use case)
--  Supports preserve_order (required feature)
--  Safe, stable, cross-platform
--  Simpler dependency tree
--  No platform-specific limitations
+- **No preserve_order support** - simd-json can't maintain custom field insertion order (required for our sorting)
+- **Platform issues** - simd-json doesn't work on big-endian architectures ([#437](https://github.com/simd-lite/simd-json/issues/437))
 
 ## Development
 

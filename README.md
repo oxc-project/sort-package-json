@@ -93,51 +93,106 @@ After sorting:
 
 ## Field Ordering
 
-Fields are sorted according to this priority:
+Fields are sorted into 12 logical groups, followed by unknown fields alphabetically, then private fields (starting with `_`) at the end. The complete field order is based on both the [original sort-package-json](https://github.com/keithamus/sort-package-json/blob/main/index.js) and [prettier's package.json sorting](https://github.com/un-ts/prettier/blob/master/packages/pkg/src/rules/sort.ts) implementations.
 
-1. **Known fields** - 138 predefined fields organized into 12 logical groups
-2. **Unknown fields** - any custom fields sorted alphabetically
-3. **Private fields** - fields starting with `_` sorted alphabetically at the end
+```jsonc
+{
+  // 1. Core Package Metadata
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "my-package",
+  "displayName": "My Package",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A sample package",
+  "categories": ["linters", "formatters"],
+  "keywords": ["sample", "test"],
+  "homepage": "https://example.com",
+  "bugs": { "url": "https://github.com/user/repo/issues", "email": "support@example.com" },
 
-The complete field order is based on both the [original sort-package-json](https://github.com/keithamus/sort-package-json/blob/main/index.js) and [prettier's package.json sorting](https://github.com/un-ts/prettier/blob/master/packages/pkg/src/rules/sort.ts) implementations.
+  // 2. License & People
+  "license": "MIT",
+  "author": { "name": "Author", "email": "author@example.com", "url": "https://example.com" },
+  "maintainers": [{ "name": "Maintainer", "email": "maintainer@example.com" }],
+  "contributors": [{ "name": "Contributor", "email": "contributor@example.com" }],
 
-### Known Field Groups
+  // 3. Repository & Funding
+  "repository": { "type": "git", "url": "https://github.com/user/repo.git" },
+  "funding": { "type": "github", "url": "https://github.com/sponsors/user" },
 
-#### 1. Core Package Metadata
-`$schema`, `name`, `displayName`, `version`, `stableVersion`, `gitHead`, `private`, `description`, `categories`, `keywords`, `homepage`, `bugs`
+  // 4. Package Content & Distribution
+  "bin": { "my-cli": "./bin/cli.js" },
+  "directories": { "lib": "lib", "bin": "bin", "man": "man", "doc": "doc" },
+  "workspaces": ["packages/*"],
+  "files": ["dist", "lib", "src/index.js"],
+  "os": ["darwin", "linux"],
+  "cpu": ["x64", "arm64"],
 
-#### 2. License & People
-`license`, `author`, `maintainers`, `contributors`
+  // 5. Package Entry Points
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "browser": "./dist/browser.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
 
-#### 3. Repository & Funding
-`repository`, `funding`, `donate`, `sponsor`, `qna`, `publisher`
+  // 6. Scripts
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest",
+    "lint": "eslint ."
+  },
 
-#### 4. Package Content & Distribution
-`man`, `style`, `example`, `examplestyle`, `assets`, `bin`, `source`, `directories`, `workspaces`, `binary`, `files`, `os`, `cpu`, `libc`
+  // 7. Dependencies
+  "dependencies": { "lodash": "^4.17.21" },
+  "devDependencies": { "typescript": "^5.0.0", "vitest": "^1.0.0" },
+  "peerDependencies": { "react": ">=18.0.0" },
+  "peerDependenciesMeta": { "react": { "optional": true } },
+  "optionalDependencies": { "fsevents": "^2.3.0" },
+  "bundledDependencies": ["internal-lib"],
+  "overrides": { "semver": "^7.5.4" },
 
-#### 5. Package Entry Points
-`type`, `sideEffects`, `main`, `module`, `browser`, `types`, `typings`, `typesVersions`, `typeScriptVersion`, `typesPublisherContentHash`, `react-native`, `svelte`, `unpkg`, `jsdelivr`, `jsnext:main`, `umd`, `umd:main`, `es5`, `esm5`, `fesm5`, `es2015`, `esm2015`, `fesm2015`, `es2020`, `esm2020`, `fesm2020`, `esnext`, `imports`, `exports`, `publishConfig`
+  // 8. Git Hooks & Commit Tools
+  "simple-git-hooks": { "pre-commit": "npx lint-staged" },
+  "lint-staged": { "*.ts": ["eslint --fix", "prettier --write"] },
+  "commitlint": { "extends": ["@commitlint/config-conventional"] },
 
-#### 6. Scripts
-`scripts`, `betterScripts`
+  // 9. VSCode Extension Specific
+  "contributes": { "commands": [] },
+  "activationEvents": ["onLanguage:javascript"],
+  "icon": "icon.png",
 
-#### 7. Dependencies
-`dependencies`, `devDependencies`, `dependenciesMeta`, `peerDependencies`, `peerDependenciesMeta`, `optionalDependencies`, `bundledDependencies`, `bundleDependencies`, `resolutions`, `overrides`
+  // 10. Build & Tool Configuration
+  "browserslist": ["> 1%", "last 2 versions"],
+  "prettier": { "semi": false, "singleQuote": true },
+  "eslintConfig": { "extends": ["eslint:recommended"] },
 
-#### 8. Git Hooks & Commit Tools
-`husky`, `simple-git-hooks`, `pre-commit`, `lint-staged`, `nano-staged`, `commitlint`
+  // 11. Testing
+  "jest": { "testEnvironment": "node" },
+  "c8": { "include": ["src/**"] },
 
-#### 9. VSCode Extension Specific
-`l10n`, `contributes`, `activationEvents`, `extensionPack`, `extensionDependencies`, `extensionKind`, `icon`, `badges`, `galleryBanner`, `preview`, `markdown`
+  // 12. Runtime & Package Manager
+  "engines": { "node": ">=18.0.0" },
+  "packageManager": "pnpm@8.0.0",
+  "pnpm": { "overrides": {} },
 
-#### 10. Build & Tool Configuration
-`napi`, `flat`, `config`, `nodemonConfig`, `browserify`, `babel`, `browserslist`, `xo`, `prettier`, `eslintConfig`, `eslintIgnore`, `standard`, `npmpkgjsonlint`, `npmPackageJsonLintConfig`, `npmpackagejsonlint`, `release`, `auto-changelog`, `remarkConfig`, `stylelint`, `typescript`, `typedoc`, `tshy`, `tsdown`, `size-limit`
+  // Unknown fields (sorted alphabetically)
+  "customField": "value",
+  "myConfig": {},
 
-#### 11. Testing
-`ava`, `jest`, `jest-junit`, `jest-stare`, `mocha`, `nyc`, `c8`, `tap`, `tsd`, `typeCoverage`, `oclif`
-
-#### 12. Runtime & Package Manager
-`languageName`, `preferGlobal`, `devEngines`, `engines`, `engineStrict`, `volta`, `packageManager`, `pnpm`
+  // Private fields (sorted alphabetically, always last)
+  "_internal": "hidden",
+  "_private": "data"
+}
+```
 
 ## Why Not simd-json?
 

@@ -14,7 +14,9 @@
 
 </div>
 
-A Rust implementation of [sort-package-json](https://github.com/keithamus/sort-package-json) that sorts package.json files according to well-established npm conventions.
+A Rust implementation that sorts package.json files according to well-established npm conventions.
+
+> **Note on Compatibility:** This crate is **not compatible** with the original [sort-package-json](https://github.com/keithamus/sort-package-json) npm package. While both tools sort package.json files, this Rust implementation uses different sorting groupings that we believe are clearer and easier to navigate. The field order is inspired by both the original sort-package-json and Prettier's package.json sorting, but organized into more intuitive logical groups.
 
 ## Features
 

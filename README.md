@@ -28,11 +28,44 @@ A Rust implementation that sorts package.json files according to well-establishe
 
 ## Usage
 
-```bash
-cargo run
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+sort-package-json = "0.0.5"
 ```
 
-The tool will recursively find all `package.json` files in the current directory and sort them in place.
+### Library API
+
+```rust
+use std::fs;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let contents = fs::read_to_string("package.json")?;
+    let sorted = sort_package_json::sort_package_json(&contents)?;
+    fs::write("package.json", sorted)?;
+    Ok(())
+}
+```
+
+With custom options:
+
+```rust
+use sort_package_json::{sort_package_json_with_options, SortOptions};
+
+let options = SortOptions { pretty: false };
+let sorted = sort_package_json_with_options(&contents, &options)?;
+```
+
+### Running the Example
+
+To test on a repository, run the included example which recursively finds and sorts all `package.json` files:
+
+```bash
+cargo run --example simple [PATH]
+```
+
+If no path is provided, it defaults to the current directory.
 
 ### Example
 
@@ -41,20 +74,20 @@ Given an unsorted package.json:
 ```json
 {
   "version": "1.0.0",
-  "dependencies": { ... },
+  "dependencies": { "foo": "1.0.0" },
   "name": "my-package",
-  "scripts": { ... }
+  "scripts": { "test": "vitest" }
 }
 ```
 
-Running `cargo run package.json` produces:
+After sorting:
 
 ```json
 {
   "name": "my-package",
   "version": "1.0.0",
-  "scripts": { ... },
-  "dependencies": { ... }
+  "scripts": { "test": "vitest" },
+  "dependencies": { "foo": "1.0.0" }
 }
 ```
 

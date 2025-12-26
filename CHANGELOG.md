@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.6](https://github.com/oxc-project/sort-package-json/compare/v0.0.5...v0.0.6) - 2025-12-26
+
+### Fixed
+
+- do not sort contributors nor maintainers because they can prioritized
+
+### Other
+
+- rewrite integration tests with comprehensive fixture
+- Replace field ordering list with annotated JSONC example
+- Update README with library API usage and example runner
+- Add explicit compatibility note to README ([#17](https://github.com/oxc-project/sort-package-json/pull/17))
+- Condense 'Why Not simd-json?' section to bullet points
+
 ## [0.0.5](https://github.com/oxc-project/sort-package-json/compare/v0.0.4...v0.0.5) - 2025-12-17
 
 ### Other

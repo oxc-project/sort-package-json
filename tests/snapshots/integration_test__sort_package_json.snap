@@ -25,14 +25,31 @@ expression: result
   },
   "maintainers": [
     {
+      "url": "https://maintainer1.com",
       "name": "Maintainer One",
-      "email": "maintainer1@example.com",
-      "url": "https://maintainer1.com"
+      "email": "maintainer1@example.com"
     },
     {
-      "name": "Maintainer Two",
       "email": "maintainer2@example.com",
-      "url": "https://maintainer2.com"
+      "url": "https://maintainer2.com",
+      "name": "Maintainer Two"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Zebra Person",
+      "email": "zebra@example.com",
+      "url": "https://zebra.example.com"
+    },
+    {
+      "name": "Apple Person",
+      "email": "apple@example.com",
+      "url": "https://apple.example.com"
+    },
+    {
+      "name": "Middle Person",
+      "email": "middle@example.com",
+      "url": "https://middle.example.com"
     }
   ],
   "repository": {

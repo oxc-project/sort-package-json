@@ -130,18 +130,6 @@ fn transform_with_key_order(value: Value, key_order: &[&str]) -> Value {
     transform_value(value, |o| sort_object_by_key_order(o, key_order))
 }
 
-fn transform_people_array(value: Value) -> Value {
-    transform_array(value, |mut arr| {
-        // Transform objects in-place instead of map().collect()
-        for v in &mut arr {
-            if let Value::Object(obj) = std::mem::take(v) {
-                *v = Value::Object(sort_people_object(obj));
-            }
-        }
-        arr
-    })
-}
-
 fn sort_object_alphabetically(obj: Map<String, Value>) -> Map<String, Value> {
     let mut entries: Vec<(String, Value)> = obj.into_iter().collect();
     entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
@@ -311,8 +299,8 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             // License & People
             12 => "license",
             13 => "author" => transform_value(value, sort_people_object),
-            14 => "maintainers" => transform_people_array(value),
-            15 => "contributors" => transform_people_array(value),
+            14 => "maintainers",
+            15 => "contributors",
             // Repository & Funding
             16 => "repository" => transform_with_key_order(value, &["type", "url"]),
             17 => "funding" => transform_with_key_order(value, &["type", "url"]),

@@ -139,8 +139,8 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
-      "default": "./dist/index.mjs"
-    }
+      "default": "./dist/index.mjs",
+    },
   },
   "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
 
@@ -148,7 +148,7 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
   "scripts": {
     "build": "tsup",
     "test": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
   },
 
   // 7. Dependencies
@@ -190,7 +190,7 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
 
   // Private fields (sorted alphabetically, always last)
   "_internal": "hidden",
-  "_private": "data"
+  "_private": "data",
 }
 ```
 

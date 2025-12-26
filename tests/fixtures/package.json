@@ -1,22 +1,15 @@
 {
-  "name": "test-package",
   "version": "1.0.0",
-  "description": "A test package for sorting",
-  "keywords": [
-    "test",
-    "sorting",
-    "json",
-    "test",
-    "example"
-  ],
+  "name": "test-package",
+  "$schema": "https://json.schemastore.org/package",
+  "displayName": "Test Package Display",
+  "description": "A comprehensive test package for sorting",
+  "categories": ["testing", "utilities", "testing"],
+  "keywords": ["test", "sorting", "json", "test", "example"],
   "homepage": "https://github.com/test/test-package#readme",
   "bugs": {
     "email": "bugs@example.com",
     "url": "https://github.com/test/test-package/issues"
-  },
-  "repository": {
-    "url": "https://github.com/test/test-package",
-    "type": "git"
   },
   "license": "MIT",
   "author": {
@@ -25,18 +18,16 @@
     "name": "Test Author"
   },
   "maintainers": [
+    "Zebra Maintainer <zebra@example.com>",
+    "Apple Maintainer <apple@example.com>",
     {
       "url": "https://maintainer1.com",
-      "name": "Maintainer One",
+      "name": "Object Maintainer",
       "email": "maintainer1@example.com"
-    },
-    {
-      "email": "maintainer2@example.com",
-      "url": "https://maintainer2.com",
-      "name": "Maintainer Two"
     }
   ],
   "contributors": [
+    "Zebra Contributor <zebra@example.com>",
     {
       "name": "Zebra Person",
       "email": "zebra@example.com",
@@ -46,13 +37,43 @@
       "name": "Apple Person",
       "email": "apple@example.com",
       "url": "https://apple.example.com"
-    },
-    {
-      "name": "Middle Person",
-      "email": "middle@example.com",
-      "url": "https://middle.example.com"
     }
   ],
+  "repository": {
+    "url": "https://github.com/test/test-package",
+    "type": "git"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/test",
+    "type": "github"
+  },
+  "man": "./man/doc.1",
+  "bin": {
+    "cli": "./bin/cli.js",
+    "app": "./bin/app.js"
+  },
+  "directories": {
+    "doc": "./docs",
+    "lib": "./lib",
+    "test": "./tests",
+    "bin": "./bin"
+  },
+  "files": [
+    "src/generated/constants.js",
+    "src",
+    "dist",
+    "src/index.js",
+    "README.md",
+    "src/utils/helper.js",
+    "dist",
+    "LICENSE",
+    "bin/cli.js"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js",
+  "browser": "./dist/browser.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "default": "./dist/index.js",
@@ -71,20 +92,10 @@
       "types": "./dist/utils.d.ts"
     }
   },
-  "main": "./dist/index.js",
-  "module": "./dist/index.esm.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "src/generated/constants.js",
-    "src",
-    "dist",
-    "src/index.js",
-    "README.md",
-    "src/utils/helper.js",
-    "dist",
-    "LICENSE",
-    "bin/cli.js"
-  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "scripts": {
     "test": "jest",
     "posttest": "echo 'Tests complete'",
@@ -103,18 +114,53 @@
     "jest": "^29.0.0",
     "typescript": "^5.0.0"
   },
-  "engines": {
-    "npm": ">=8.0.0",
-    "node": ">=18.0.0"
+  "peerDependencies": {
+    "react": ">=16.0.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.0.0"
+  },
+  "bundledDependencies": ["lodash", "axios"],
+  "resolutions": {
+    "lodash": "^4.17.21"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": ["eslint --fix", "git add"]
   },
   "babel": {
     "presets": ["@babel/preset-env", "@babel/preset-react"],
     "plugins": ["@babel/plugin-proposal-class-properties"]
   },
-  "publishConfig": {
-    "access": "public"
+  "eslintConfig": {
+    "extends": ["eslint:recommended"],
+    "env": {
+      "node": true
+    }
   },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverage": true
+  },
+  "engines": {
+    "npm": ">=8.0.0",
+    "node": ">=18.0.0"
+  },
+  "volta": {
+    "node": "18.0.0"
+  },
+  "packageManager": "npm@8.0.0",
   "customField": "this is a custom unknown field",
-  "_custom": "another private field",
-  "_id": "test-package@1.0.0"
+  "anotherCustom": "another custom field",
+  "_custom": "private field with underscore",
+  "_id": "test-package@1.0.0",
+  "_internal": "another private field"
 }

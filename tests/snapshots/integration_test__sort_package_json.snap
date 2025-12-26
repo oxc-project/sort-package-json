@@ -3,9 +3,15 @@ source: tests/integration_test.rs
 expression: result
 ---
 {
+  "$schema": "https://json.schemastore.org/package",
   "name": "test-package",
+  "displayName": "Test Package Display",
   "version": "1.0.0",
-  "description": "A test package for sorting",
+  "description": "A comprehensive test package for sorting",
+  "categories": [
+    "testing",
+    "utilities"
+  ],
   "keywords": [
     "example",
     "json",
@@ -24,18 +30,16 @@ expression: result
     "url": "https://example.com"
   },
   "maintainers": [
+    "Zebra Maintainer <zebra@example.com>",
+    "Apple Maintainer <apple@example.com>",
     {
       "url": "https://maintainer1.com",
-      "name": "Maintainer One",
+      "name": "Object Maintainer",
       "email": "maintainer1@example.com"
-    },
-    {
-      "email": "maintainer2@example.com",
-      "url": "https://maintainer2.com",
-      "name": "Maintainer Two"
     }
   ],
   "contributors": [
+    "Zebra Contributor <zebra@example.com>",
     {
       "name": "Zebra Person",
       "email": "zebra@example.com",
@@ -45,16 +49,26 @@ expression: result
       "name": "Apple Person",
       "email": "apple@example.com",
       "url": "https://apple.example.com"
-    },
-    {
-      "name": "Middle Person",
-      "email": "middle@example.com",
-      "url": "https://middle.example.com"
     }
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/test/test-package"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/test"
+  },
+  "man": "./man/doc.1",
+  "bin": {
+    "app": "./bin/app.js",
+    "cli": "./bin/cli.js"
+  },
+  "directories": {
+    "lib": "./lib",
+    "bin": "./bin",
+    "doc": "./docs",
+    "test": "./tests"
   },
   "files": [
     "dist",
@@ -66,8 +80,10 @@ expression: result
     "src/generated/constants.js",
     "src/utils/helper.js"
   ],
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.esm.js",
+  "browser": "./dist/browser.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -88,7 +104,8 @@ expression: result
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "test": "jest",
@@ -108,6 +125,30 @@ expression: result
     "typescript": "^5.0.0",
     "webpack": "^5.0.0"
   },
+  "peerDependencies": {
+    "react": ">=16.0.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.0.0"
+  },
+  "bundledDependencies": [
+    "axios",
+    "lodash"
+  ],
+  "resolutions": {
+    "lodash": "^4.17.21"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
   "babel": {
     "plugins": [
       "@babel/plugin-proposal-class-properties"
@@ -117,11 +158,33 @@ expression: result
       "@babel/preset-react"
     ]
   },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ]
+  },
+  "jest": {
+    "collectCoverage": true,
+    "testEnvironment": "node"
+  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
+  "volta": {
+    "node": "18.0.0"
+  },
+  "packageManager": "npm@8.0.0",
+  "anotherCustom": "another custom field",
   "customField": "this is a custom unknown field",
-  "_custom": "another private field",
-  "_id": "test-package@1.0.0"
+  "_custom": "private field with underscore",
+  "_id": "test-package@1.0.0",
+  "_internal": "another private field"
 }

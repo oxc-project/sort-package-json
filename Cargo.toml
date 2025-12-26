@@ -54,6 +54,10 @@ criterion2 = { version = "3", default-features = false }
 ignore = "0.4"
 insta = "1.41"
 
+[lib]
+test = false
+doctest = false
+
 [[bench]]
 name = "sort"
 harness = false

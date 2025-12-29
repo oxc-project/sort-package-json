@@ -5,11 +5,13 @@ use serde_json::{Map, Value};
 pub struct SortOptions {
     /// Whether to pretty-print the output JSON
     pub pretty: bool,
+    /// Whether to sort the scripts field alphabetically
+    pub sort_scripts: bool,
 }
 
 impl Default for SortOptions {
     fn default() -> Self {
-        Self { pretty: true }
+        Self { pretty: true, sort_scripts: false }
     }
 }
 
@@ -20,8 +22,11 @@ pub fn sort_package_json_with_options(
 ) -> Result<String, serde_json::Error> {
     let value: Value = serde_json::from_str(input)?;
 
-    let sorted_value =
-        if let Value::Object(obj) = value { Value::Object(sort_object_keys(obj)) } else { value };
+    let sorted_value = if let Value::Object(obj) = value {
+        Value::Object(sort_object_keys(obj, options))
+    } else {
+        value
+    };
 
     let result = if options.pretty {
         let mut s = serde_json::to_string_pretty(&sorted_value)?;
@@ -274,7 +279,7 @@ fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
     result
 }
 
-fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
+fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<String, Value> {
     // Storage for categorized keys with their values and ordering information
     let mut known: Vec<(usize, String, Value)> = Vec::new(); // (order_index, key, value)
     let mut non_private: Vec<(String, Value)> = Vec::new();
@@ -355,8 +360,8 @@ fn sort_object_keys(obj: Map<String, Value>) -> Map<String, Value> {
             64 => "exports" => transform_value(value, sort_exports),
             65 => "publishConfig" => transform_value(value, sort_object_alphabetically),
             // Scripts
-            66 => "scripts",
-            67 => "betterScripts",
+            66 => "scripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },
+            67 => "betterScripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },
             // Dependencies
             68 => "dependencies" => transform_value(value, sort_object_alphabetically),
             69 => "devDependencies" => transform_value(value, sort_object_alphabetically),

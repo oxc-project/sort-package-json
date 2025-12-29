@@ -108,12 +108,12 @@ expression: result
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "test": "jest",
-    "posttest": "echo 'Tests complete'",
     "build": "webpack",
+    "dev": "webpack serve",
     "lint": "eslint .",
+    "posttest": "echo 'Tests complete'",
     "pretest": "echo 'Starting tests'",
-    "dev": "webpack serve"
+    "test": "jest"
   },
   "dependencies": {
     "axios": "^1.0.0",

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.7](https://github.com/oxc-project/sort-package-json/compare/v0.0.6...v0.0.7) - 2025-12-29
+
+### Added
+
+- add `sort_scripts` option to sort scripts field alphabetically ([#22](https://github.com/oxc-project/sort-package-json/pull/22))
+
 ## [0.0.6](https://github.com/oxc-project/sort-package-json/compare/v0.0.5...v0.0.6) - 2025-12-26
 
 ### Fixed

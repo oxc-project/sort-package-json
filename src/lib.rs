@@ -157,28 +157,49 @@ fn sort_object_recursive(obj: Map<String, Value>) -> Map<String, Value> {
         .collect()
 }
 
-fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
-    // Filter non-strings in-place (same behavior as filter_map)
-    arr.retain(|v| v.is_string());
-
-    // Sort in-place by comparing string values (zero allocations)
-    arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
-
-    // Remove consecutive duplicates in-place
-    arr.dedup_by(|a, b| a.as_str() == b.as_str());
-
-    arr
+fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
+    // Separate strings from non-strings to preserve all data
+    let mut strings: Vec<Value> = Vec::new();
+    let mut non_strings: Vec<Value> = Vec::new();
+    
+    for v in arr {
+        if v.is_string() {
+            strings.push(v);
+        } else {
+            non_strings.push(v);
+        }
+    }
+    
+    // Sort and deduplicate strings
+    strings.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
+    strings.dedup_by(|a, b| a.as_str() == b.as_str());
+    
+    // Append non-strings at the end (preserving their original order)
+    strings.extend(non_strings);
+    
+    strings
 }
 
-fn sort_paths_naturally(mut arr: Vec<Value>) -> Vec<Value> {
-    // Filter and deduplicate in-place
-    arr.retain(|v| v.is_string());
-    arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
-    arr.dedup_by(|a, b| a.as_str() == b.as_str());
+fn sort_paths_naturally(arr: Vec<Value>) -> Vec<Value> {
+    // Separate strings from non-strings to preserve all data
+    let mut strings: Vec<Value> = Vec::new();
+    let mut non_strings: Vec<Value> = Vec::new();
+    
+    for v in arr {
+        if v.is_string() {
+            strings.push(v);
+        } else {
+            non_strings.push(v);
+        }
+    }
+    
+    // Sort and deduplicate strings
+    strings.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
+    strings.dedup_by(|a, b| a.as_str() == b.as_str());
 
     // Pre-compute depth and lowercase ONCE per string (not on every comparison)
-    // Move Values from arr into tuples (no copying)
-    let mut with_keys: Vec<(usize, String, Value)> = arr
+    // Move Values from strings into tuples (no copying)
+    let mut with_keys: Vec<(usize, String, Value)> = strings
         .into_iter()
         .map(|v| {
             let s = v.as_str().unwrap();
@@ -194,7 +215,12 @@ fn sort_paths_naturally(mut arr: Vec<Value>) -> Vec<Value> {
     });
 
     // Extract Values (move out of tuples, no copying)
-    with_keys.into_iter().map(|(_, _, v)| v).collect()
+    let mut result: Vec<Value> = with_keys.into_iter().map(|(_, _, v)| v).collect();
+    
+    // Append non-strings at the end (preserving their original order)
+    result.extend(non_strings);
+    
+    result
 }
 
 fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {

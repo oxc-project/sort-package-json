@@ -416,7 +416,7 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             115 => "typedoc" => transform_value(value, sort_object_recursive),
             116 => "tshy" => transform_value(value, sort_object_recursive),
             117 => "tsdown" => transform_value(value, sort_object_recursive),
-            118 => "size-limit" => transform_array(value, sort_array_unique),
+            118 => "size-limit",
             // Testing
             119 => "ava" => transform_value(value, sort_object_recursive),
             120 => "jest" => transform_value(value, sort_object_recursive),

@@ -159,16 +159,8 @@ fn sort_object_recursive(obj: Map<String, Value>) -> Map<String, Value> {
 
 fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
     // Separate strings from non-strings to preserve all data
-    let mut strings: Vec<Value> = Vec::new();
-    let mut non_strings: Vec<Value> = Vec::new();
-    
-    for v in arr {
-        if v.is_string() {
-            strings.push(v);
-        } else {
-            non_strings.push(v);
-        }
-    }
+    let (mut strings, non_strings): (Vec<Value>, Vec<Value>) = 
+        arr.into_iter().partition(|v| v.is_string());
     
     // Sort and deduplicate strings
     strings.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
@@ -182,16 +174,8 @@ fn sort_array_unique(arr: Vec<Value>) -> Vec<Value> {
 
 fn sort_paths_naturally(arr: Vec<Value>) -> Vec<Value> {
     // Separate strings from non-strings to preserve all data
-    let mut strings: Vec<Value> = Vec::new();
-    let mut non_strings: Vec<Value> = Vec::new();
-    
-    for v in arr {
-        if v.is_string() {
-            strings.push(v);
-        } else {
-            non_strings.push(v);
-        }
-    }
+    let (mut strings, non_strings): (Vec<Value>, Vec<Value>) = 
+        arr.into_iter().partition(|v| v.is_string());
     
     // Sort and deduplicate strings
     strings.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));

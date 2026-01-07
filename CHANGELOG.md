@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.8](https://github.com/oxc-project/sort-package-json/compare/v0.0.7...v0.0.8) - 2026-01-07
+
+### Other
+
+- Fix size-limit field being emptied during package.json sorting ([#29](https://github.com/oxc-project/sort-package-json/pull/29))
+
 ### Fixed
 
 - Fix `size-limit` field being emptied when sorting - the field now preserves its array of configuration objects instead of filtering them out

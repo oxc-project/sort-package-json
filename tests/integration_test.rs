@@ -75,18 +75,17 @@ fn test_utf8_bom_preservation() {
     const BOM: char = '\u{FEFF}';
 
     // Test 1: Files with BOM preserve it
-    let input = fs::read_to_string("tests/fixtures/package-bom.json")
-        .expect("Failed to read BOM fixture");
+    let input =
+        fs::read_to_string("tests/fixtures/package-bom.json").expect("Failed to read BOM fixture");
     assert!(input.starts_with(BOM), "Fixture should have BOM");
 
     let result = sort(&input);
     assert!(result.starts_with(BOM), "BOM should be preserved in output");
 
     let json_without_bom = &result[BOM.len_utf8()..];
-    let parsed: Value = serde_json::from_str(json_without_bom)
-        .expect("Output should be valid JSON after BOM");
-    assert_eq!(parsed.get("name").and_then(|v| v.as_str()),
-               Some("@vitejs/test-utf8-bom-package"));
+    let parsed: Value =
+        serde_json::from_str(json_without_bom).expect("Output should be valid JSON after BOM");
+    assert_eq!(parsed.get("name").and_then(|v| v.as_str()), Some("@vitejs/test-utf8-bom-package"));
 
     // Test 2: Files without BOM don't get BOM added
     let input_no_bom = r#"{"version": "1.0.0", "name": "test"}"#;

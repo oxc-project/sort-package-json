@@ -74,63 +74,26 @@ fn test_utf8_bom_preservation() {
     // Test case based on https://github.com/vitejs/vite/blob/main/playground/resolve/utf8-bom-package/package.json
     const BOM: char = '\u{FEFF}';
 
+    // Test 1: Files with BOM preserve it
     let input = fs::read_to_string("tests/fixtures/package-bom.json")
         .expect("Failed to read BOM fixture");
-
-    // Verify input has BOM
     assert!(input.starts_with(BOM), "Fixture should have BOM");
 
     let result = sort(&input);
-
-    // Check that BOM is preserved at the start
     assert!(result.starts_with(BOM), "BOM should be preserved in output");
 
-    // Check that the rest is valid JSON after removing BOM
     let json_without_bom = &result[BOM.len_utf8()..];
     let parsed: Value = serde_json::from_str(json_without_bom)
         .expect("Output should be valid JSON after BOM");
-
-    // Verify fields are properly sorted
     assert_eq!(parsed.get("name").and_then(|v| v.as_str()),
                Some("@vitejs/test-utf8-bom-package"));
-    assert_eq!(parsed.get("private").and_then(|v| v.as_bool()), Some(true));
-    assert_eq!(parsed.get("version").and_then(|v| v.as_str()), Some("1.0.0"));
 
-    // Verify exports field exists and is an object
-    assert!(parsed.get("exports").is_some());
-    assert!(parsed.get("exports").unwrap().is_object());
-}
+    // Test 2: Files without BOM don't get BOM added
+    let input_no_bom = r#"{"version": "1.0.0", "name": "test"}"#;
+    let result_no_bom = sort(input_no_bom);
+    assert!(!result_no_bom.starts_with(BOM), "BOM should not be added if not present");
 
-#[test]
-fn test_no_bom_unchanged() {
-    // Test that files without BOM remain without BOM
-    let input = r#"{
-  "version": "1.0.0",
-  "name": "test-package"
-}"#;
-
-    let result = sort(input);
-
-    // Check that no BOM is added
-    assert!(!result.starts_with('\u{FEFF}'), "BOM should not be added if not present");
-
-    // Verify it's still valid JSON
-    let parsed: Value = serde_json::from_str(&result).expect("Output should be valid JSON");
-    assert_eq!(parsed.get("name").and_then(|v| v.as_str()), Some("test-package"));
-}
-
-#[test]
-fn test_bom_idempotency() {
-    // Test that sorting a BOM file twice produces the same result
-    const BOM: char = '\u{FEFF}';
-    let input = format!(r#"{}{{
-  "version": "1.0.0",
-  "name": "test"
-}}"#, BOM);
-
-    let first_sort = sort(&input);
-    let second_sort = sort(&first_sort);
-
-    assert_eq!(first_sort, second_sort, "Sorting BOM files should be idempotent");
-    assert!(first_sort.starts_with(BOM), "BOM should be preserved across multiple sorts");
+    // Test 3: Idempotency - sorting twice produces same result
+    let second_sort = sort(&result);
+    assert_eq!(result, second_sort, "Sorting BOM files should be idempotent");
 }

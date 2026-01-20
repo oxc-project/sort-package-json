@@ -22,8 +22,8 @@ pub fn sort_package_json_with_options(
 ) -> Result<String, serde_json::Error> {
     // Check for UTF-8 BOM and strip it for parsing
     const BOM: char = '\u{FEFF}';
-    let has_bom = input.starts_with(BOM);
-    let input_without_bom = if has_bom { &input[BOM.len_utf8()..] } else { input };
+    let input_without_bom = input.strip_prefix(BOM).unwrap_or(input);
+    let has_bom = input_without_bom.len() != input.len();
 
     let value: Value = serde_json::from_str(input_without_bom)?;
 
@@ -33,7 +33,7 @@ pub fn sort_package_json_with_options(
         value
     };
 
-    let mut result = if options.pretty {
+    let result = if options.pretty {
         let mut s = serde_json::to_string_pretty(&sorted_value)?;
         s.push('\n');
         s
@@ -43,10 +43,13 @@ pub fn sort_package_json_with_options(
 
     // Preserve BOM if it was present in the input
     if has_bom {
-        result.insert(0, BOM);
+        let mut output = String::with_capacity(BOM.len_utf8() + result.len());
+        output.push(BOM);
+        output.push_str(&result);
+        Ok(output)
+    } else {
+        Ok(result)
     }
-
-    Ok(result)
 }
 
 /// Sorts a package.json string with default options (pretty-printed)

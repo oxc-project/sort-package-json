@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.9](https://github.com/oxc-project/sort-package-json/compare/v0.0.8...v0.0.9) - 2026-01-20
+
+### Other
+
+- Add UTF-8 BOM support for package.json files ([#39](https://github.com/oxc-project/sort-package-json/pull/39))
+
 ## [0.0.8](https://github.com/oxc-project/sort-package-json/compare/v0.0.7...v0.0.8) - 2026-01-07
 
 ### Other

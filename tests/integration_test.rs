@@ -68,3 +68,31 @@ fn test_size_limit_preservation() {
     let ignore_array = ignore.as_array().unwrap();
     assert_eq!(ignore_array.len(), 3, "ignore should have 3 elements");
 }
+
+#[test]
+fn test_utf8_bom_preservation() {
+    // Test case based on https://github.com/vitejs/vite/blob/main/playground/resolve/utf8-bom-package/package.json
+    const BOM: char = '\u{FEFF}';
+
+    // Test 1: Files with BOM preserve it
+    let input =
+        fs::read_to_string("tests/fixtures/package-bom.json").expect("Failed to read BOM fixture");
+    assert!(input.starts_with(BOM), "Fixture should have BOM");
+
+    let result = sort(&input);
+    assert!(result.starts_with(BOM), "BOM should be preserved in output");
+
+    let json_without_bom = &result[BOM.len_utf8()..];
+    let parsed: Value =
+        serde_json::from_str(json_without_bom).expect("Output should be valid JSON after BOM");
+    assert_eq!(parsed.get("name").and_then(|v| v.as_str()), Some("@vitejs/test-utf8-bom-package"));
+
+    // Test 2: Files without BOM don't get BOM added
+    let input_no_bom = r#"{"version": "1.0.0", "name": "test"}"#;
+    let result_no_bom = sort(input_no_bom);
+    assert!(!result_no_bom.starts_with(BOM), "BOM should not be added if not present");
+
+    // Test 3: Idempotency - sorting twice produces same result
+    let second_sort = sort(&result);
+    assert_eq!(result, second_sort, "Sorting BOM files should be idempotent");
+}

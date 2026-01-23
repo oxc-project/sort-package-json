@@ -71,14 +71,13 @@ expression: result
     "test": "./tests"
   },
   "files": [
-    "dist",
-    "LICENSE",
-    "README.md",
     "src",
-    "bin/cli.js",
-    "src/index.js",
-    "src/generated/constants.js",
-    "src/utils/helper.js"
+    "!src/internal",
+    "dist",
+    "!dist/temp",
+    "README.md",
+    "LICENSE",
+    "bin/cli.js"
   ],
   "type": "module",
   "main": "./dist/index.js",

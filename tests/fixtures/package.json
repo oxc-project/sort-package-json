@@ -59,13 +59,12 @@
     "bin": "./bin"
   },
   "files": [
-    "src/generated/constants.js",
     "src",
+    "!src/internal",
     "dist",
-    "src/index.js",
+    "!dist/temp",
+    "dist",
     "README.md",
-    "src/utils/helper.js",
-    "dist",
     "LICENSE",
     "bin/cli.js"
   ],

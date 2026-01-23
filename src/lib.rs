@@ -183,31 +183,24 @@ fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
     arr
 }
 
-fn sort_paths_naturally(mut arr: Vec<Value>) -> Vec<Value> {
-    // Filter and deduplicate in-place
-    arr.retain(|v| v.is_string());
-    arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
-    arr.dedup_by(|a, b| a.as_str() == b.as_str());
-
-    // Pre-compute depth and lowercase ONCE per string (not on every comparison)
-    // Move Values from arr into tuples (no copying)
-    let mut with_keys: Vec<(usize, String, Value)> = arr
-        .into_iter()
+/// Deduplicate array while preserving order (no sorting).
+/// Used for fields where order matters (e.g., `files` with `!` negation patterns).
+fn dedupe_array(arr: Vec<Value>) -> Vec<Value> {
+    let mut seen: Vec<&str> = Vec::new();
+    let keep: Vec<bool> = arr
+        .iter()
         .map(|v| {
-            let s = v.as_str().unwrap();
-            let depth = s.matches('/').count();
-            let lowercase = s.to_lowercase();
-            (depth, lowercase, v)
+            v.as_str().is_some_and(|s| {
+                if seen.contains(&s) {
+                    false
+                } else {
+                    seen.push(s);
+                    true
+                }
+            })
         })
         .collect();
-
-    // Sort using pre-computed keys (zero allocations during comparison)
-    with_keys.sort_unstable_by(|(depth_a, lower_a, _), (depth_b, lower_b, _)| {
-        depth_a.cmp(depth_b).then_with(|| lower_a.cmp(lower_b))
-    });
-
-    // Extract Values (move out of tuples, no copying)
-    with_keys.into_iter().map(|(_, _, v)| v).collect()
+    arr.into_iter().zip(keep).filter_map(|(v, keep)| keep.then_some(v)).collect()
 }
 
 fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
@@ -337,7 +330,7 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             29 => "directories" => transform_with_key_order(value, &["lib", "bin", "man", "doc", "example", "test"]),
             30 => "workspaces",
             31 => "binary" => transform_with_key_order(value, &["module_name", "module_path", "remote_path", "package_name", "host"]),
-            32 => "files" => transform_array(value, sort_paths_naturally),
+            32 => "files" => transform_array(value, dedupe_array),
             33 => "os",
             34 => "cpu",
             35 => "libc" => transform_array(value, sort_array_unique),

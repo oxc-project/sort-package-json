@@ -96,4 +96,3 @@ fn test_utf8_bom_preservation() {
     let second_sort = sort(&result);
     assert_eq!(result, second_sort, "Sorting BOM files should be idempotent");
 }
-

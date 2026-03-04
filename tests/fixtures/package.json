@@ -128,8 +128,14 @@
       "pre-commit": "lint-staged"
     }
   },
+  "vite-staged": {
+    "*.ts": "vitest related command"
+  },
   "lint-staged": {
     "*.js": ["eslint --fix", "git add"]
+  },
+  "nano-staged": {
+    "*.md": "prettier --write"
   },
   "babel": {
     "presets": ["@babel/preset-env", "@babel/preset-react"],

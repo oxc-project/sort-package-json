@@ -382,10 +382,10 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             // Git Hooks & Commit Tools
             78 => "husky" => transform_value(value, sort_object_recursive),
             79 => "simple-git-hooks",
-            80 => "pre-commit",
-            81 => "vite-staged",
-            82 => "lint-staged",
-            83 => "nano-staged",
+            80 => "vite-staged",
+            81 => "lint-staged",
+            82 => "nano-staged",
+            83 => "pre-commit",
             84 => "commitlint" => transform_value(value, sort_object_recursive),
             // VSCode Extension Specific
             85 => "l10n",

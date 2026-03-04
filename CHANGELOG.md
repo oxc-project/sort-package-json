@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.11](https://github.com/oxc-project/sort-package-json/compare/v0.0.10...v0.0.11) - 2026-03-04
+
+### Added
+
+- support vite-staged and stage-tool key ordering ([#63](https://github.com/oxc-project/sort-package-json/pull/63))
+
+### Other
+
+- reduce allocations in sorting pipeline ([#65](https://github.com/oxc-project/sort-package-json/pull/65))
+
 ## [0.0.10](https://github.com/oxc-project/sort-package-json/compare/v0.0.9...v0.0.10) - 2026-01-23
 
 ### Fixed

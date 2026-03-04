@@ -162,7 +162,9 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
 
   // 8. Git Hooks & Commit Tools
   "simple-git-hooks": { "pre-commit": "npx lint-staged" },
+  "vite-staged": { "*.ts": "vitest related command" },
   "lint-staged": { "*.ts": ["eslint --fix", "prettier --write"] },
+  "nano-staged": { "*.md": "prettier --write" },
   "commitlint": { "extends": ["@commitlint/config-conventional"] },
 
   // 9. VSCode Extension Specific

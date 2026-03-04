@@ -44,5 +44,5 @@ jobs:
         uses: CodSpeedHQ/action@2ac572851726409c88c02a307f1ea2632a9ea59b # v4.11.0
         timeout-minutes: 15
         with:
-          mode: instrumentation
+          mode: simulation
           run: cargo codspeed run

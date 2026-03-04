@@ -148,26 +148,24 @@ fn transform_with_key_order(value: Value, key_order: &[&str]) -> Value {
     transform_value(value, |o| sort_object_by_key_order(o, key_order))
 }
 
-fn sort_object_alphabetically(obj: Map<String, Value>) -> Map<String, Value> {
-    let mut entries: Vec<(String, Value)> = obj.into_iter().collect();
-    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-    entries.into_iter().collect()
+fn sort_object_alphabetically(mut obj: Map<String, Value>) -> Map<String, Value> {
+    obj.sort_keys();
+    obj
 }
 
 fn sort_object_recursive(obj: Map<String, Value>) -> Map<String, Value> {
-    let mut entries: Vec<(String, Value)> = obj.into_iter().collect();
-    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    let mut obj = obj;
+    sort_object_recursive_in_place(&mut obj);
+    obj
+}
 
-    entries
-        .into_iter()
-        .map(|(key, value)| {
-            let transformed_value = match value {
-                Value::Object(nested) => Value::Object(sort_object_recursive(nested)),
-                _ => value,
-            };
-            (key, transformed_value)
-        })
-        .collect()
+fn sort_object_recursive_in_place(obj: &mut Map<String, Value>) {
+    for value in obj.values_mut() {
+        if let Value::Object(nested) = value {
+            sort_object_recursive_in_place(nested);
+        }
+    }
+    obj.sort_keys();
 }
 
 fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
@@ -185,40 +183,39 @@ fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
 
 /// Deduplicate array while preserving order (no sorting).
 /// Used for fields where order matters (e.g., `files` with `!` negation patterns).
-fn dedupe_array(arr: Vec<Value>) -> Vec<Value> {
-    let mut seen: Vec<&str> = Vec::new();
-    let keep: Vec<bool> = arr
-        .iter()
-        .map(|v| {
-            v.as_str().is_some_and(|s| {
-                if seen.contains(&s) {
-                    false
-                } else {
-                    seen.push(s);
-                    true
-                }
-            })
-        })
-        .collect();
-    arr.into_iter().zip(keep).filter_map(|(v, keep)| keep.then_some(v)).collect()
+fn dedupe_array(mut arr: Vec<Value>) -> Vec<Value> {
+    let mut write = 0;
+    for read in 0..arr.len() {
+        let keep = match arr[read].as_str() {
+            Some(s) => !arr[..write].iter().any(|seen| seen.as_str() == Some(s)),
+            None => false,
+        };
+        if keep {
+            if write != read {
+                arr.swap(write, read);
+            }
+            write += 1;
+        }
+    }
+    arr.truncate(write);
+    arr
 }
 
 fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
+    obj.sort_keys();
+
     // Pre-allocate capacity to avoid reallocations
     let mut result = Map::with_capacity(obj.len());
 
     // Add keys in specified order
     for &key in key_order {
-        if let Some(value) = obj.remove(key) {
+        if let Some(value) = obj.shift_remove(key) {
             result.insert(key.into(), value);
         }
     }
 
-    // Add remaining keys alphabetically
-    let mut remaining: Vec<(String, Value)> = obj.into_iter().collect();
-    remaining.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-    for (key, value) in remaining {
+    // Remaining keys are already sorted alphabetically.
+    for (key, value) in obj {
         result.insert(key, value);
     }
 
@@ -230,6 +227,7 @@ fn sort_people_object(obj: Map<String, Value>) -> Map<String, Value> {
 }
 
 fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
+    let obj_len = obj.len();
     let mut paths = Vec::new();
     let mut types_conds = Vec::new();
     let mut other_conds = Vec::new();
@@ -247,7 +245,7 @@ fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
         }
     }
 
-    let mut result = Map::new();
+    let mut result = Map::with_capacity(obj_len);
 
     // Add in order: paths, types, others, default
     for (key, value) in paths {
@@ -454,7 +452,7 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
     private.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
     // Build result map
-    let mut result = Map::new();
+    let mut result = Map::with_capacity(known.len() + non_private.len() + private.len());
 
     // Insert known fields (already transformed)
     for (_index, key, value) in known {

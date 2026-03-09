@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.12](https://github.com/oxc-project/sort-package-json/compare/v0.0.11...v0.0.12) - 2026-03-09
+
+### Fixed
+
+- preserve `exports` and `imports` key order ([#69](https://github.com/oxc-project/sort-package-json/pull/69))
+
 ## [0.0.11](https://github.com/oxc-project/sort-package-json/compare/v0.0.10...v0.0.11) - 2026-03-04
 
 ### Added

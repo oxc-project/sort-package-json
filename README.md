@@ -22,6 +22,7 @@ A Rust implementation that sorts package.json files according to well-establishe
 
 - **Sorts top-level fields** according to npm ecosystem conventions (138 predefined fields)
 - **Preserves all data** - only reorders fields, never modifies values
+- **Respects semantics** - `exports` and `imports` fields preserve their key order (first-match resolution)
 - **Fast and safe** - pure Rust implementation with no unsafe code
 - **Idempotent** - sorting multiple times produces the same result
 - **Handles edge cases** - unknown fields sorted alphabetically, private fields (starting with `_`) sorted last
@@ -134,14 +135,8 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
   "module": "./dist/index.mjs",
   "browser": "./dist/browser.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.mjs",
-    },
-  },
+  "imports": { /* preserved as-is (order has meaning per spec) */ },
+  "exports": { /* preserved as-is (order has meaning per spec) */ },
   "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
 
   // 6. Scripts

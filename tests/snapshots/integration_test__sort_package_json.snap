@@ -86,10 +86,10 @@ expression: result
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "import": "./dist/index.esm.js",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js"
     },
     "./paths-should-keep-b_a": {
       "b": "./index.cjs",
@@ -97,9 +97,9 @@ expression: result
     },
     "./package.json": "./package.json",
     "./utils": {
-      "types": "./dist/utils.d.ts",
       "import": "./dist/utils.esm.js",
-      "default": "./dist/utils.js"
+      "default": "./dist/utils.js",
+      "types": "./dist/utils.d.ts"
     }
   },
   "publishConfig": {

@@ -226,63 +226,6 @@ fn sort_people_object(obj: Map<String, Value>) -> Map<String, Value> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
-fn sort_exports(obj: Map<String, Value>) -> Map<String, Value> {
-    let obj_len = obj.len();
-    let mut paths = Vec::new();
-    let mut types_conds = Vec::new();
-    let mut other_conds = Vec::new();
-    let mut default_cond = None;
-
-    for (key, value) in obj {
-        if key.starts_with('.') {
-            paths.push((key, value));
-        } else if key == "default" {
-            default_cond = Some((key, value));
-        } else if key == "types" || key.starts_with("types@") {
-            types_conds.push((key, value));
-        } else {
-            other_conds.push((key, value));
-        }
-    }
-
-    let mut result = Map::with_capacity(obj_len);
-
-    // Add in order: paths, types, others, default
-    for (key, value) in paths {
-        let transformed = match value {
-            Value::Object(nested) => Value::Object(sort_exports(nested)),
-            _ => value,
-        };
-        result.insert(key, transformed);
-    }
-
-    for (key, value) in types_conds {
-        let transformed = match value {
-            Value::Object(nested) => Value::Object(sort_exports(nested)),
-            _ => value,
-        };
-        result.insert(key, transformed);
-    }
-
-    for (key, value) in other_conds {
-        let transformed = match value {
-            Value::Object(nested) => Value::Object(sort_exports(nested)),
-            _ => value,
-        };
-        result.insert(key, transformed);
-    }
-
-    if let Some((key, value)) = default_cond {
-        let transformed = match value {
-            Value::Object(nested) => Value::Object(sort_exports(nested)),
-            _ => value,
-        };
-        result.insert(key, transformed);
-    }
-
-    result
-}
-
 fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<String, Value> {
     // Storage for categorized keys with their values and ordering information
     let mut known: Vec<(usize, String, Value)> = Vec::new(); // (order_index, key, value)
@@ -361,7 +304,7 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             61 => "fesm2020",
             62 => "esnext",
             63 => "imports",
-            64 => "exports" => transform_value(value, sort_exports),
+            64 => "exports",
             65 => "publishConfig" => transform_value(value, sort_object_alphabetically),
             // Scripts
             66 => "scripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde_json::{Map, Value};
 
 /// Options for controlling JSON formatting when sorting
@@ -7,11 +9,19 @@ pub struct SortOptions {
     pub pretty: bool,
     /// Whether to sort the scripts field alphabetically
     pub sort_scripts: bool,
+    /// Custom top-level field ordering.
+    ///
+    /// Fields listed here appear first in the specified order, followed by
+    /// remaining known fields in their default order. Unknown and private
+    /// fields not in this list keep their default placement.
+    ///
+    /// An empty list (default) preserves the built-in ordering.
+    pub sort_order: Vec<String>,
 }
 
 impl Default for SortOptions {
     fn default() -> Self {
-        Self { pretty: true, sort_scripts: false }
+        Self { pretty: true, sort_scripts: false, sort_order: Vec::new() }
     }
 }
 
@@ -387,6 +397,48 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             137 => "packageManager",
             138 => "pnpm",
         ]);
+    }
+
+    // Apply custom sort_order: re-index fields and promote unknown/private fields
+    if !options.sort_order.is_empty() {
+        let mut order_map: HashMap<&str, usize> =
+            HashMap::with_capacity(options.sort_order.len());
+        for (i, name) in options.sort_order.iter().enumerate() {
+            order_map.entry(name.as_str()).or_insert(i); // first occurrence wins
+        }
+
+        let sort_order_len = order_map.len();
+
+        // Re-index known fields
+        for item in &mut known {
+            if let Some(&pos) = order_map.get(item.1.as_str()) {
+                item.0 = pos;
+            } else {
+                item.0 = sort_order_len + item.0;
+            }
+        }
+
+        // Promote non-private unknown fields that are in sort_order
+        let mut remaining_non_private = Vec::new();
+        for (key, value) in non_private {
+            if let Some(&pos) = order_map.get(key.as_str()) {
+                known.push((pos, key, value));
+            } else {
+                remaining_non_private.push((key, value));
+            }
+        }
+        non_private = remaining_non_private;
+
+        // Promote private fields that are in sort_order
+        let mut remaining_private = Vec::new();
+        for (key, value) in private {
+            if let Some(&pos) = order_map.get(key.as_str()) {
+                known.push((pos, key, value));
+            } else {
+                remaining_private.push((key, value));
+            }
+        }
+        private = remaining_private;
     }
 
     // Sort each category (using unstable sort for better performance)

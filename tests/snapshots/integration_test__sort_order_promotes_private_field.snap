@@ -1,0 +1,9 @@
+---
+source: tests/integration_test.rs
+expression: result
+---
+{
+  "name": "test",
+  "_id": "internal",
+  "version": "1.0.0"
+}

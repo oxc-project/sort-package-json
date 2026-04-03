@@ -1,0 +1,10 @@
+---
+source: tests/integration_test.rs
+expression: result
+---
+{
+  "name": "test",
+  "myCustomField": "hello",
+  "version": "1.0.0",
+  "description": "A test package"
+}

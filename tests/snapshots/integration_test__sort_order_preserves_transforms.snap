@@ -1,0 +1,12 @@
+---
+source: tests/integration_test.rs
+expression: result
+---
+{
+  "dependencies": {
+    "axios": "1",
+    "react": "18",
+    "zod": "3"
+  },
+  "name": "test"
+}

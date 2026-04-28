@@ -54,7 +54,7 @@ With custom options:
 ```rust
 use sort_package_json::{sort_package_json_with_options, SortOptions};
 
-let options = SortOptions { pretty: false };
+let options = SortOptions { pretty: false, ..SortOptions::default() };
 let sorted = sort_package_json_with_options(&contents, &options)?;
 ```
 
@@ -190,6 +190,24 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
   "_private": "data",
 }
 ```
+
+## Custom Field Order
+
+The `sort_order` option lets you control which fields appear first. Fields listed in `sort_order` are placed at the top in the given order, followed by the remaining known fields in their default order. Unknown and private fields not in the list keep their default placement.
+
+```rust
+use sort_package_json::{sort_package_json_with_options, SortOptions};
+
+let options = SortOptions {
+    sort_order: vec![
+        "name", "version", "description", "scripts",
+    ].into_iter().map(String::from).collect(),
+    ..SortOptions::default()
+};
+let sorted = sort_package_json_with_options(&contents, &options)?;
+```
+
+This is useful when you prefer certain fields like `scripts` near the top of your `package.json` for quick access.
 
 ## Why Not simd-json?
 

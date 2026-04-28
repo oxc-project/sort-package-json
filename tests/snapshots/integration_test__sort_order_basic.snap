@@ -1,0 +1,17 @@
+---
+source: tests/integration_test.rs
+expression: result
+---
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "A test package",
+  "scripts": {
+    "build": "tsc",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "a": "2",
+    "b": "1"
+  }
+}

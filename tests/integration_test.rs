@@ -3,8 +3,23 @@ use sort_package_json::{SortOptions, sort_package_json_with_options};
 use std::fs;
 
 fn sort(s: &str) -> String {
-    sort_package_json_with_options(s, &SortOptions { pretty: true, sort_scripts: true })
-        .expect("Failed to parse package.json")
+    sort_package_json_with_options(
+        s,
+        &SortOptions { pretty: true, sort_scripts: true, ..SortOptions::default() },
+    )
+    .expect("Failed to parse package.json")
+}
+
+fn sort_with_order(s: &str, sort_order: Vec<&str>) -> String {
+    sort_package_json_with_options(
+        s,
+        &SortOptions {
+            pretty: true,
+            sort_scripts: true,
+            sort_order: sort_order.into_iter().map(String::from).collect(),
+        },
+    )
+    .expect("Failed to parse package.json")
 }
 
 #[test]
@@ -95,4 +110,103 @@ fn test_utf8_bom_preservation() {
     // Test 3: Idempotency - sorting twice produces same result
     let second_sort = sort(&result);
     assert_eq!(result, second_sort, "Sorting BOM files should be idempotent");
+}
+
+#[test]
+fn test_sort_order_basic() {
+    let input = r#"{
+  "dependencies": { "b": "1", "a": "2" },
+  "version": "1.0.0",
+  "scripts": { "build": "tsc", "dev": "vite" },
+  "name": "test",
+  "description": "A test package"
+}"#;
+    let result = sort_with_order(input, vec!["name", "version", "description", "scripts"]);
+    insta::assert_snapshot!(result);
+}
+
+#[test]
+fn test_sort_order_promotes_unknown_field() {
+    let input = r#"{
+  "version": "1.0.0",
+  "name": "test",
+  "myCustomField": "hello",
+  "description": "A test package"
+}"#;
+    let result = sort_with_order(input, vec!["name", "myCustomField", "version"]);
+    insta::assert_snapshot!(result);
+}
+
+#[test]
+fn test_sort_order_promotes_private_field() {
+    let input = r#"{
+  "version": "1.0.0",
+  "name": "test",
+  "_id": "internal"
+}"#;
+    let result = sort_with_order(input, vec!["name", "_id", "version"]);
+    insta::assert_snapshot!(result);
+}
+
+#[test]
+fn test_sort_order_preserves_transforms() {
+    let input = r#"{
+  "name": "test",
+  "dependencies": { "zod": "3", "axios": "1", "react": "18" }
+}"#;
+    // dependencies should still be sorted alphabetically even when promoted
+    let result = sort_with_order(input, vec!["dependencies", "name"]);
+    insta::assert_snapshot!(result);
+}
+
+#[test]
+fn test_sort_order_empty_is_noop() {
+    let input = r#"{
+  "version": "1.0.0",
+  "name": "test",
+  "description": "A test package"
+}"#;
+    let default_result = sort(input);
+    let with_empty_order = sort_with_order(input, vec![]);
+    assert_eq!(default_result, with_empty_order, "Empty sort_order should be a no-op");
+}
+
+#[test]
+fn test_sort_order_missing_fields_skipped() {
+    let input = r#"{
+  "version": "1.0.0",
+  "name": "test"
+}"#;
+    let result = sort_with_order(input, vec!["name", "nonexistent", "also_missing", "version"]);
+    let parsed: Value = serde_json::from_str(&result).unwrap();
+    let keys: Vec<&str> = parsed.as_object().unwrap().keys().map(|k| k.as_str()).collect();
+    assert_eq!(keys, vec!["name", "version"]);
+}
+
+#[test]
+fn test_sort_order_duplicates() {
+    let input = r#"{
+  "version": "1.0.0",
+  "name": "test",
+  "description": "A test package"
+}"#;
+    // "name" appears twice — first occurrence (position 0) should win
+    let result = sort_with_order(input, vec!["name", "version", "name", "description"]);
+    let parsed: Value = serde_json::from_str(&result).unwrap();
+    let keys: Vec<&str> = parsed.as_object().unwrap().keys().map(|k| k.as_str()).collect();
+    assert_eq!(keys, vec!["name", "version", "description"]);
+}
+
+#[test]
+fn test_sort_order_idempotency() {
+    let input = r#"{
+  "dependencies": { "b": "1", "a": "2" },
+  "version": "1.0.0",
+  "scripts": { "build": "tsc" },
+  "name": "test"
+}"#;
+    let order = vec!["name", "version", "scripts"];
+    let first = sort_with_order(input, order.clone());
+    let second = sort_with_order(&first, order);
+    assert_eq!(first, second, "Sorting with sort_order should be idempotent");
 }

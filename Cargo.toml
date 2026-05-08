@@ -1,6 +1,6 @@
 [package]
 name = "sort-package-json"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["Boshen <boshenc@gmail.com>"]
 categories = []
 edition = "2021"

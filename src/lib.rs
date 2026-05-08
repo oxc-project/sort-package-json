@@ -305,7 +305,7 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             62 => "esnext",
             63 => "imports",
             64 => "exports",
-            65 => "publishConfig" => transform_value(value, sort_object_alphabetically),
+            65 => "publishConfig" => transform_value(value, |o| sort_object_keys(o, options)),
             // Scripts
             66 => "scripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },
             67 => "betterScripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },

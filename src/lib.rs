@@ -1,11 +1,14 @@
 use serde_json::{Map, Value};
 
-/// Options for controlling JSON formatting when sorting
+/// UTF-8 BOM (`U+FEFF`).
+const BOM_STR: &str = "\u{FEFF}";
+
+/// Options for controlling JSON formatting when sorting.
 #[derive(Debug, Clone)]
 pub struct SortOptions {
-    /// Whether to pretty-print the output JSON
+    /// Whether to pretty-print the output JSON.
     pub pretty: bool,
-    /// Whether to sort the scripts field alphabetically
+    /// Whether to sort the scripts field alphabetically.
     pub sort_scripts: bool,
 }
 
@@ -15,135 +18,75 @@ impl Default for SortOptions {
     }
 }
 
-/// Sorts a package.json string with custom options
+/// Sorts a `package.json` string with custom options.
 pub fn sort_package_json_with_options(
     input: &str,
     options: &SortOptions,
 ) -> Result<String, serde_json::Error> {
-    // Check for UTF-8 BOM and strip it for parsing
-    const BOM: char = '\u{FEFF}';
-    let input_without_bom = input.strip_prefix(BOM).unwrap_or(input);
-    let has_bom = input_without_bom.len() != input.len();
+    let (has_bom, body) =
+        input.strip_prefix(BOM_STR).map_or((false, input), |stripped| (true, stripped));
 
-    let value: Value = serde_json::from_str(input_without_bom)?;
+    let value: Value = serde_json::from_str(body)?;
 
-    let sorted_value = if let Value::Object(obj) = value {
-        Value::Object(sort_object_keys(obj, options))
-    } else {
-        value
+    let sorted = match value {
+        Value::Object(obj) => Value::Object(sort_object_keys(obj, options)),
+        other => other,
     };
 
-    let result = if options.pretty {
-        let mut s = serde_json::to_string_pretty(&sorted_value)?;
-        s.push('\n');
-        s
-    } else {
-        serde_json::to_string(&sorted_value)?
-    };
-
-    // Preserve BOM if it was present in the input
+    // Serialize directly into a byte buffer so the (optional) BOM, the JSON body, and the
+    // trailing newline are all written into a single allocation. This skips the extra
+    // String allocation + copy that `to_string_pretty` followed by manual BOM-prepending
+    // would incur.
+    //
+    // Sized for the common case where the input is already pretty-printed: output ≈ input
+    // in length. The `+ 16` absorbs the trailing `'\n'` push and minor reformatting slop
+    // without forcing a final realloc.
+    let mut buf: Vec<u8> = Vec::with_capacity(input.len() + 16);
     if has_bom {
-        let mut output = String::with_capacity(BOM.len_utf8() + result.len());
-        output.push(BOM);
-        output.push_str(&result);
-        Ok(output)
-    } else {
-        Ok(result)
+        buf.extend_from_slice(BOM_STR.as_bytes());
     }
+    if options.pretty {
+        serde_json::to_writer_pretty(&mut buf, &sorted)?;
+        buf.push(b'\n');
+    } else {
+        serde_json::to_writer(&mut buf, &sorted)?;
+    }
+    // SAFETY: `serde_json::to_writer{,_pretty}` are contractually required to emit valid
+    // UTF-8 (this is also what `serde_json::to_string_pretty` itself relies on). The BOM
+    // bytes and the trailing `\n` are also valid UTF-8.
+    Ok(unsafe { String::from_utf8_unchecked(buf) })
 }
 
-/// Sorts a package.json string with default options (pretty-printed)
+/// Sorts a `package.json` string with default options (pretty-printed).
 pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
     sort_package_json_with_options(input, &SortOptions::default())
 }
 
-/// Declares package.json field ordering with transformations.
-///
-/// This macro generates a match statement that handles known package.json fields
-/// in a specific order using explicit indices. It supports optional transformation
-/// expressions for fields that need special processing.
-///
-/// # Usage
-///
-/// ```ignore
-/// declare_field_order!(key, value, known, non_private, private; [
-///     0 => "$schema",
-///     1 => "name",
-///     7 => "categories" => transform_array(&value, sort_array_unique),
-/// ]);
-/// ```
-///
-/// # Parameters
-///
-/// - `key`: The field name identifier
-/// - `value`: The field value identifier
-/// - `known`: The vector to push known fields to
-/// - `non_private`: The vector to push non-private unknown fields to
-/// - `private`: The vector to push private (underscore-prefixed) fields to
-/// - Followed by an array of field declarations in the format:
-///   - `index => "field_name"` for fields without transformation
-///   - `index => "field_name" => transformation_expr` for fields with transformation
-macro_rules! declare_field_order {
-    (
-        $key:ident, $value:ident, $known:ident, $non_private:ident, $private:ident;
-        [
-            $( $idx:literal => $field_name:literal $( => $transform:expr )? ),* $(,)?
-        ]
-    ) => {
-        {
-            // Compile-time validation: ensure indices are literals
-            $( let _ = $idx; )*
+// ===== Value-level transformations ==========================================
 
-            // Generate the match statement
-            match $key.as_str() {
-                $(
-                    $field_name => {
-                        $known.push((
-                            $idx,
-                            $key,
-                            declare_field_order!(@value $value $(, $transform)?)
-                        ));
-                    },
-                )*
-                _ => {
-                    // Unknown field - check if private
-                    if $key.starts_with('_') {
-                        $private.push(($key, $value));
-                    } else {
-                        $non_private.push(($key, $value));
-                    }
-                }
-            }
-        }
-    };
-
-    // Helper: extract value without transformation
-    (@value $value:ident) => { $value };
-
-    // Helper: extract value with transformation
-    (@value $value:ident, $transform:expr) => { $transform };
-}
-
-fn transform_value<F>(value: Value, transform: F) -> Value
+#[inline]
+fn transform_value<F>(value: Value, f: F) -> Value
 where
     F: FnOnce(Map<String, Value>) -> Map<String, Value>,
 {
     match value {
-        Value::Object(o) => Value::Object(transform(o)),
-        _ => value,
+        Value::Object(o) => Value::Object(f(o)),
+        other => other,
     }
 }
 
-fn transform_array<F>(value: Value, transform: F) -> Value
+#[inline]
+fn transform_array<F>(value: Value, f: F) -> Value
 where
     F: FnOnce(Vec<Value>) -> Vec<Value>,
 {
     match value {
-        Value::Array(arr) => Value::Array(transform(arr)),
-        _ => value,
+        Value::Array(arr) => Value::Array(f(arr)),
+        other => other,
     }
 }
 
+#[inline]
 fn transform_with_key_order(value: Value, key_order: &[&str]) -> Value {
     transform_value(value, |o| sort_object_by_key_order(o, key_order))
 }
@@ -153,8 +96,7 @@ fn sort_object_alphabetically(mut obj: Map<String, Value>) -> Map<String, Value>
     obj
 }
 
-fn sort_object_recursive(obj: Map<String, Value>) -> Map<String, Value> {
-    let mut obj = obj;
+fn sort_object_recursive(mut obj: Map<String, Value>) -> Map<String, Value> {
     sort_object_recursive_in_place(&mut obj);
     obj
 }
@@ -168,21 +110,17 @@ fn sort_object_recursive_in_place(obj: &mut Map<String, Value>) {
     obj.sort_keys();
 }
 
+/// Filters non-strings, sorts ascending, and removes duplicates.
 fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
-    // Filter non-strings in-place (same behavior as filter_map)
-    arr.retain(|v| v.is_string());
-
-    // Sort in-place by comparing string values (zero allocations)
+    arr.retain(Value::is_string);
+    // `unwrap` is sound: `retain` above guarantees every element is a string.
     arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
-
-    // Remove consecutive duplicates in-place
     arr.dedup_by(|a, b| a.as_str() == b.as_str());
-
     arr
 }
 
-/// Deduplicate array while preserving order (no sorting).
-/// Used for fields where order matters (e.g., `files` with `!` negation patterns).
+/// Removes duplicate string entries while preserving original order. Used for fields
+/// where order matters (e.g., `files` with `!` negation patterns).
 fn dedupe_array(mut arr: Vec<Value>) -> Vec<Value> {
     let mut write = 0;
     for read in 0..arr.len() {
@@ -201,24 +139,31 @@ fn dedupe_array(mut arr: Vec<Value>) -> Vec<Value> {
     arr
 }
 
-fn sort_object_by_key_order(mut obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
-    obj.sort_keys();
+/// Reorders `obj` so that any keys present in `key_order` appear first (in the given
+/// order), with the remaining keys following alphabetically.
+///
+/// Single-pass classification + merge — avoids `IndexMap::shift_remove`'s O(n) tail-shift
+/// per requested key.
+fn sort_object_by_key_order(obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
+    let mut known: Vec<Option<(String, Value)>> = (0..key_order.len()).map(|_| None).collect();
+    let mut others: Vec<(String, Value)> = Vec::new();
 
-    // Pre-allocate capacity to avoid reallocations
-    let mut result = Map::with_capacity(obj.len());
-
-    // Add keys in specified order
-    for &key in key_order {
-        if let Some(value) = obj.shift_remove(key) {
-            result.insert(key.into(), value);
+    for (key, value) in obj {
+        match key_order.iter().position(|kn| *kn == key.as_str()) {
+            Some(idx) => known[idx] = Some((key, value)),
+            None => others.push((key, value)),
         }
     }
 
-    // Remaining keys are already sorted alphabetically.
-    for (key, value) in obj {
+    others.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+
+    let mut result = Map::with_capacity(known.len() + others.len());
+    for (key, value) in known.into_iter().flatten() {
         result.insert(key, value);
     }
-
+    for (key, value) in others {
+        result.insert(key, value);
+    }
     result
 }
 
@@ -226,15 +171,40 @@ fn sort_people_object(obj: Map<String, Value>) -> Map<String, Value> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
-fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<String, Value> {
-    // Storage for categorized keys with their values and ordering information
-    let mut known: Vec<(usize, String, Value)> = Vec::new(); // (order_index, key, value)
-    let mut non_private: Vec<(String, Value)> = Vec::new();
-    let mut private: Vec<(String, Value)> = Vec::new();
+// ===== Top-level field ordering =============================================
 
-    // Single pass through all keys using into_iter()
+/// Declares the canonical order for known top-level `package.json` fields. For each
+/// matched key, the field is bucketed with its order index; an optional transformation
+/// expression (with `value` and `options` in scope) rewrites the value before storage.
+/// Unknown fields fall through to the catch-all arm.
+macro_rules! declare_field_order {
+    (
+        $key:ident, $value:ident, $known:ident, $unknown:ident;
+        [ $( $idx:literal => $field_name:literal $( => $transform:expr )? ),* $(,)? ]
+    ) => {
+        match $key.as_str() {
+            $(
+                $field_name => $known.push((
+                    $idx,
+                    $key,
+                    declare_field_order!(@value $value $(, $transform)?),
+                )),
+            )*
+            _ => $unknown.push(($key, $value)),
+        }
+    };
+    (@value $value:ident) => { $value };
+    (@value $value:ident, $transform:expr) => { $transform };
+}
+
+fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<String, Value> {
+    // `known` collects fields with a canonical position; `unknown` collects everything
+    // else, sorted with private (`_`-prefixed) keys after non-private ones.
+    let mut known: Vec<(usize, String, Value)> = Vec::new();
+    let mut unknown: Vec<(String, Value)> = Vec::new();
+
     for (key, value) in obj {
-        declare_field_order!(key, value, known, non_private, private; [
+        declare_field_order!(key, value, known, unknown; [
             // Core Package Metadata
             0 => "$schema",
             1 => "name",
@@ -389,28 +359,21 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
         ]);
     }
 
-    // Sort each category (using unstable sort for better performance)
-    known.sort_unstable_by_key(|(index, _, _)| *index);
-    non_private.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-    private.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+    known.sort_unstable_by_key(|(idx, _, _)| *idx);
+    // Single sort over all unknowns: non-private (`!_`) before private (`_`-prefixed),
+    // each group alphabetical.
+    unknown.sort_unstable_by(|(a, _), (b, _)| {
+        let a_priv = a.starts_with('_');
+        let b_priv = b.starts_with('_');
+        a_priv.cmp(&b_priv).then_with(|| a.cmp(b))
+    });
 
-    // Build result map
-    let mut result = Map::with_capacity(known.len() + non_private.len() + private.len());
-
-    // Insert known fields (already transformed)
-    for (_index, key, value) in known {
+    let mut result = Map::with_capacity(known.len() + unknown.len());
+    for (_, key, value) in known {
         result.insert(key, value);
     }
-
-    // Insert non-private unknown fields
-    for (key, value) in non_private {
+    for (key, value) in unknown {
         result.insert(key, value);
     }
-
-    // Insert private fields
-    for (key, value) in private {
-        result.insert(key, value);
-    }
-
     result
 }

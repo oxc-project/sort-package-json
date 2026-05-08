@@ -37,7 +37,11 @@ pub fn sort_package_json_with_options(
     // trailing newline are all written into a single allocation. This skips the extra
     // String allocation + copy that `to_string_pretty` followed by manual BOM-prepending
     // would incur.
-    let mut buf: Vec<u8> = Vec::with_capacity(input.len());
+    //
+    // Sized for the common case where the input is already pretty-printed: output ≈ input
+    // in length. The `+ 16` absorbs the trailing `'\n'` push and minor reformatting slop
+    // without forcing a final realloc.
+    let mut buf: Vec<u8> = Vec::with_capacity(input.len() + 16);
     if has_bom {
         buf.extend_from_slice(BOM_STR.as_bytes());
     }

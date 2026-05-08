@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.13](https://github.com/oxc-project/sort-package-json/compare/v0.0.12...v0.0.13) - 2026-05-08
+
+### Fixed
+
+- deep-sort publishConfig with the same field order as package.json ([#94](https://github.com/oxc-project/sort-package-json/pull/94))
+
+### Other
+
+- trim output allocations and unify unknown-field sort ([#96](https://github.com/oxc-project/sort-package-json/pull/96))
+
 ## [0.0.12](https://github.com/oxc-project/sort-package-json/compare/v0.0.11...v0.0.12) - 2026-03-09
 
 ### Fixed

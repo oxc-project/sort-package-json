@@ -93,7 +93,15 @@
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "access": "public",
+    "tag": "latest",
+    "types": "./dist/index.d.ts",
+    "main": "./dist/index.js",
+    "name": "@scope/published-name",
+    "dependencies": {
+      "react": "^18.0.0",
+      "axios": "^1.0.0"
+    }
   },
   "scripts": {
     "test": "jest",

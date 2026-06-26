@@ -135,8 +135,8 @@ Fields are sorted into 12 logical groups, followed by unknown fields alphabetica
   "module": "./dist/index.mjs",
   "browser": "./dist/browser.js",
   "types": "./dist/index.d.ts",
-  "imports": { /* preserved as-is (order has meaning per spec) */ },
-  "exports": { /* preserved as-is (order has meaning per spec) */ },
+  "imports": {/* preserved as-is (order has meaning per spec) */},
+  "exports": {/* preserved as-is (order has meaning per spec) */},
   "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org" },
 
   // 6. Scripts

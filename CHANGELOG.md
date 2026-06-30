@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.14](https://github.com/oxc-project/sort-package-json/compare/v0.0.13...v0.0.14) - 2026-06-30
+
+### Other
+
+- add autofix workflow ([#120](https://github.com/oxc-project/sort-package-json/pull/120))
+
 ## [0.0.13](https://github.com/oxc-project/sort-package-json/compare/v0.0.12...v0.0.13) - 2026-05-08
 
 ### Fixed

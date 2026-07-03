@@ -239,14 +239,6 @@ MIT
 - [simd-json issue #437 - Big Endian Compatibility](https://github.com/simd-lite/simd-json/issues/437)
 - [Surprises in the Rust JSON Ecosystem](https://ecton.dev/rust-json-ecosystem/)
 
-## [Sponsored By](https://github.com/sponsors/Boshen)
-
-<p align="center">
-  <a href="https://github.com/sponsors/Boshen">
-    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="My sponsors" />
-  </a>
-</p>
-
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
@@ -263,3 +255,11 @@ MIT
 [crates-url]: https://crates.io/crates/sort-package-json
 [docs-badge]: https://img.shields.io/docsrs/sort-package-json
 [docs-url]: https://docs.rs/sort-package-json
+
+## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
+
+<p align="center">
+  <a href="https://github.com/sponsors/Boshen">
+    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="Our sponsors" />
+  </a>
+</p>

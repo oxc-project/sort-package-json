@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.14](https://github.com/oxc-project/sort-package-json/compare/v0.0.13...v0.0.14) - 2026-07-13
+
+### Added
+
+- add wireit under betterScripts ([#132](https://github.com/oxc-project/sort-package-json/pull/132))
+
+### Fixed
+
+- top-level sort for jest, tshy, remarkConfig, and auto-changelog ([#138](https://github.com/oxc-project/sort-package-json/pull/138))
+
+### Other
+
+- _(deps)_ update rust crate ignore to v0.4.28 ([#135](https://github.com/oxc-project/sort-package-json/pull/135))
+- _(deps)_ update rust crate ignore to v0.4.27 ([#130](https://github.com/oxc-project/sort-package-json/pull/130))
+- normalize README sponsor section
+- add autofix workflow ([#120](https://github.com/oxc-project/sort-package-json/pull/120))
+
 ## [0.0.13](https://github.com/oxc-project/sort-package-json/compare/v0.0.12...v0.0.13) - 2026-05-08
 
 ### Fixed

@@ -159,9 +159,40 @@
     "singleQuote": true,
     "semi": false
   },
+  "auto-changelog": {
+    "unreleased": true,
+    "replaceText": {
+      "(ABC-\\d+)": "[`$1`](https://issues.example.com/$1)",
+      "\\[`(ABC-\\d+)`\\]\\(.*\\) hotfix": "HOTFIX $1"
+    }
+  },
+  "remarkConfig": {
+    "settings": {
+      "bullet": "-"
+    },
+    "plugins": {
+      "remark-toc": true,
+      "remark-lint": true
+    }
+  },
+  "tshy": {
+    "selfLink": false,
+    "exports": {
+      ".": "./src/index.ts",
+      "./compiled": {
+        "types": "./lib/compiled.d.ts",
+        "import": "./lib/compiled.mjs",
+        "default": "./lib/compiled.cjs"
+      }
+    }
+  },
   "jest": {
     "testEnvironment": "node",
-    "collectCoverage": true
+    "collectCoverage": true,
+    "moduleNameMapper": {
+      "^_/(.*).(woff|woff2)$": "<rootDir>/assets/test/fileMock.js",
+      "^_/(.*)$": "<rootDir>/src/$1"
+    }
   },
   "engines": {
     "npm": ">=8.0.0",

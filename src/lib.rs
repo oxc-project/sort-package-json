@@ -328,17 +328,21 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             110 => "npmPackageJsonLintConfig",
             111 => "npmpackagejsonlint",
             112 => "release",
-            113 => "auto-changelog" => transform_value(value, sort_object_recursive),
-            114 => "remarkConfig" => transform_value(value, sort_object_recursive),
+            // Only sorts top-level keys: `replaceText` maps regexes to replacements applied sequentially in key order
+            113 => "auto-changelog" => transform_value(value, sort_object_alphabetically),
+            // Only sorts top-level keys: `plugins` in object form runs plugins in key order
+            114 => "remarkConfig" => transform_value(value, sort_object_alphabetically),
             115 => "stylelint" => transform_value(value, sort_object_recursive),
             116 => "typescript" => transform_value(value, sort_object_recursive),
             117 => "typedoc" => transform_value(value, sort_object_recursive),
-            118 => "tshy" => transform_value(value, sort_object_recursive),
+            // Only sorts top-level keys: `exports` values may be pass-through conditional exports
+            118 => "tshy" => transform_value(value, sort_object_alphabetically),
             119 => "tsdown" => transform_value(value, sort_object_recursive),
             120 => "size-limit",
             // Testing
             121 => "ava" => transform_value(value, sort_object_recursive),
-            122 => "jest" => transform_value(value, sort_object_recursive),
+            // Only sorts top-level keys: nested config like `moduleNameMapper` is order-dependent
+            122 => "jest" => transform_value(value, sort_object_alphabetically),
             123 => "jest-junit",
             124 => "jest-stare",
             125 => "mocha" => transform_value(value, sort_object_recursive),

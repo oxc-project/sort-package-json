@@ -183,8 +183,39 @@ expression: result
       "eslint:recommended"
     ]
   },
+  "auto-changelog": {
+    "replaceText": {
+      "(ABC-\\d+)": "[`$1`](https://issues.example.com/$1)",
+      "\\[`(ABC-\\d+)`\\]\\(.*\\) hotfix": "HOTFIX $1"
+    },
+    "unreleased": true
+  },
+  "remarkConfig": {
+    "plugins": {
+      "remark-toc": true,
+      "remark-lint": true
+    },
+    "settings": {
+      "bullet": "-"
+    }
+  },
+  "tshy": {
+    "exports": {
+      ".": "./src/index.ts",
+      "./compiled": {
+        "types": "./lib/compiled.d.ts",
+        "import": "./lib/compiled.mjs",
+        "default": "./lib/compiled.cjs"
+      }
+    },
+    "selfLink": false
+  },
   "jest": {
     "collectCoverage": true,
+    "moduleNameMapper": {
+      "^_/(.*).(woff|woff2)$": "<rootDir>/assets/test/fileMock.js",
+      "^_/(.*)$": "<rootDir>/src/$1"
+    },
     "testEnvironment": "node"
   },
   "engines": {

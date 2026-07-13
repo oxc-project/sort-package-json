@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(deps)* update rust crate ignore to v0.4.28 ([#135](https://github.com/oxc-project/sort-package-json/pull/135))
-- *(deps)* update rust crate ignore to v0.4.27 ([#130](https://github.com/oxc-project/sort-package-json/pull/130))
+- _(deps)_ update rust crate ignore to v0.4.28 ([#135](https://github.com/oxc-project/sort-package-json/pull/135))
+- _(deps)_ update rust crate ignore to v0.4.27 ([#130](https://github.com/oxc-project/sort-package-json/pull/130))
 - normalize README sponsor section
 - add autofix workflow ([#120](https://github.com/oxc-project/sort-package-json/pull/120))
 

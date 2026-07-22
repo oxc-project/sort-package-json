@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(deps)* update rust crate ignore to v0.4.30 ([#142](https://github.com/oxc-project/sort-package-json/pull/142))
+- _(deps)_ update rust crate ignore to v0.4.30 ([#142](https://github.com/oxc-project/sort-package-json/pull/142))
 - update sponsor section
 
 ## [0.0.14](https://github.com/oxc-project/sort-package-json/compare/v0.0.13...v0.0.14) - 2026-07-13

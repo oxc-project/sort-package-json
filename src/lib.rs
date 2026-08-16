@@ -171,6 +171,24 @@ fn sort_people_object(obj: Map<String, Value>) -> Map<String, Value> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
+fn sort_dev_engine(value: Value) -> Value {
+    const KEY_ORDER: &[&str] = &["name", "version", "onFail"];
+
+    match value {
+        Value::Array(arr) => Value::Array(
+            arr.into_iter().map(|value| transform_with_key_order(value, KEY_ORDER)).collect(),
+        ),
+        other => transform_with_key_order(other, KEY_ORDER),
+    }
+}
+
+fn sort_dev_engines(obj: Map<String, Value>) -> Map<String, Value> {
+    let mut obj: Map<String, Value> =
+        obj.into_iter().map(|(key, value)| (key, sort_dev_engine(value))).collect();
+    obj.sort_keys();
+    obj
+}
+
 // ===== Top-level field ordering =============================================
 
 /// Declares the canonical order for known top-level `package.json` fields. For each
@@ -355,7 +373,7 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
             // Runtime & Package Manager
             132 => "languageName",
             133 => "preferGlobal",
-            134 => "devEngines" => transform_value(value, sort_object_alphabetically),
+            134 => "devEngines" => transform_value(value, sort_dev_engines),
             135 => "engines" => transform_value(value, sort_object_alphabetically),
             136 => "engineStrict",
             137 => "volta" => transform_value(value, sort_object_recursive),

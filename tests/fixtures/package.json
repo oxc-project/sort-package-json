@@ -194,6 +194,16 @@
       "^_/(.*)$": "<rootDir>/src/$1"
     }
   },
+  "devEngines": {
+    "runtime": { "onFail": "download", "name": "node", "version": "1.0.0" },
+    "libc": [{ "version": ">=2.31", "onFail": "warn", "name": "glibc" }],
+    "os": [
+      { "onFail": "warn", "version": ">=14", "name": "darwin" },
+      { "version": ">=10", "name": "win32" }
+    ],
+    "packageManager": { "version": "1.0.0", "name": "pnpm", "onFail": "download" },
+    "cpu": { "onFail": "ignore", "name": "x64" }
+  },
   "engines": {
     "npm": ">=8.0.0",
     "node": ">=18.0.0"

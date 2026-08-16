@@ -218,6 +218,40 @@ expression: result
     },
     "testEnvironment": "node"
   },
+  "devEngines": {
+    "cpu": {
+      "name": "x64",
+      "onFail": "ignore"
+    },
+    "libc": [
+      {
+        "name": "glibc",
+        "version": ">=2.31",
+        "onFail": "warn"
+      }
+    ],
+    "os": [
+      {
+        "name": "darwin",
+        "version": ">=14",
+        "onFail": "warn"
+      },
+      {
+        "name": "win32",
+        "version": ">=10"
+      }
+    ],
+    "packageManager": {
+      "name": "pnpm",
+      "version": "1.0.0",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "1.0.0",
+      "onFail": "download"
+    }
+  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"

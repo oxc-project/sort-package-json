@@ -1,4 +1,8 @@
-use serde_json::{Map, Value};
+mod value;
+
+use std::borrow::Cow;
+
+use value::{Object, Value};
 
 /// UTF-8 BOM (`U+FEFF`).
 const BOM_STR: &str = "\u{FEFF}";
@@ -26,7 +30,7 @@ pub fn sort_package_json_with_options(
     let (has_bom, body) =
         input.strip_prefix(BOM_STR).map_or((false, input), |stripped| (true, stripped));
 
-    let value: Value = serde_json::from_str(body)?;
+    let value: Value<'_> = serde_json::from_str(body)?;
 
     let sorted = match value {
         Value::Object(obj) => Value::Object(sort_object_keys(obj, options)),
@@ -65,9 +69,9 @@ pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
 // ===== Value-level transformations ==========================================
 
 #[inline]
-fn transform_value<F>(value: Value, f: F) -> Value
+fn transform_value<'a, F>(value: Value<'a>, f: F) -> Value<'a>
 where
-    F: FnOnce(Map<String, Value>) -> Map<String, Value>,
+    F: FnOnce(Object<'a>) -> Object<'a>,
 {
     match value {
         Value::Object(o) => Value::Object(f(o)),
@@ -76,9 +80,9 @@ where
 }
 
 #[inline]
-fn transform_array<F>(value: Value, f: F) -> Value
+fn transform_array<'a, F>(value: Value<'a>, f: F) -> Value<'a>
 where
-    F: FnOnce(Vec<Value>) -> Vec<Value>,
+    F: FnOnce(Vec<Value<'a>>) -> Vec<Value<'a>>,
 {
     match value {
         Value::Array(arr) => Value::Array(f(arr)),
@@ -87,31 +91,31 @@ where
 }
 
 #[inline]
-fn transform_with_key_order(value: Value, key_order: &[&str]) -> Value {
+fn transform_with_key_order<'a>(value: Value<'a>, key_order: &[&str]) -> Value<'a> {
     transform_value(value, |o| sort_object_by_key_order(o, key_order))
 }
 
-fn sort_object_alphabetically(mut obj: Map<String, Value>) -> Map<String, Value> {
-    obj.sort_keys();
+fn sort_object_alphabetically(mut obj: Object<'_>) -> Object<'_> {
+    obj.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
     obj
 }
 
-fn sort_object_recursive(mut obj: Map<String, Value>) -> Map<String, Value> {
+fn sort_object_recursive(mut obj: Object<'_>) -> Object<'_> {
     sort_object_recursive_in_place(&mut obj);
     obj
 }
 
-fn sort_object_recursive_in_place(obj: &mut Map<String, Value>) {
-    for value in obj.values_mut() {
+fn sort_object_recursive_in_place(obj: &mut Object<'_>) {
+    for (_, value) in &mut *obj {
         if let Value::Object(nested) = value {
             sort_object_recursive_in_place(nested);
         }
     }
-    obj.sort_keys();
+    obj.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 }
 
 /// Filters non-strings, sorts ascending, and removes duplicates.
-fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
+fn sort_array_unique(mut arr: Vec<Value<'_>>) -> Vec<Value<'_>> {
     arr.retain(Value::is_string);
     // `unwrap` is sound: `retain` above guarantees every element is a string.
     arr.sort_unstable_by(|a, b| a.as_str().unwrap().cmp(b.as_str().unwrap()));
@@ -121,7 +125,7 @@ fn sort_array_unique(mut arr: Vec<Value>) -> Vec<Value> {
 
 /// Removes duplicate string entries while preserving original order. Used for fields
 /// where order matters (e.g., `files` with `!` negation patterns).
-fn dedupe_array(mut arr: Vec<Value>) -> Vec<Value> {
+fn dedupe_array(mut arr: Vec<Value<'_>>) -> Vec<Value<'_>> {
     let mut write = 0;
     for read in 0..arr.len() {
         let keep = match arr[read].as_str() {
@@ -142,14 +146,14 @@ fn dedupe_array(mut arr: Vec<Value>) -> Vec<Value> {
 /// Reorders `obj` so that any keys present in `key_order` appear first (in the given
 /// order), with the remaining keys following alphabetically.
 ///
-/// Single-pass classification + merge — avoids `IndexMap::shift_remove`'s O(n) tail-shift
-/// per requested key.
-fn sort_object_by_key_order(obj: Map<String, Value>, key_order: &[&str]) -> Map<String, Value> {
-    let mut known: Vec<Option<(String, Value)>> = (0..key_order.len()).map(|_| None).collect();
-    let mut others: Vec<(String, Value)> = Vec::new();
+/// Single-pass classification followed by an alphabetical sort of unrecognized keys.
+fn sort_object_by_key_order<'a>(obj: Object<'a>, key_order: &[&str]) -> Object<'a> {
+    let mut known: Vec<Option<(Cow<'a, str>, Value<'a>)>> =
+        (0..key_order.len()).map(|_| None).collect();
+    let mut others: Object<'a> = Vec::new();
 
     for (key, value) in obj {
-        match key_order.iter().position(|kn| *kn == key.as_str()) {
+        match key_order.iter().position(|kn| *kn == key.as_ref()) {
             Some(idx) => known[idx] = Some((key, value)),
             None => others.push((key, value)),
         }
@@ -157,21 +161,21 @@ fn sort_object_by_key_order(obj: Map<String, Value>, key_order: &[&str]) -> Map<
 
     others.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
 
-    let mut result = Map::with_capacity(known.len() + others.len());
+    let mut result = Vec::with_capacity(known.len() + others.len());
     for (key, value) in known.into_iter().flatten() {
-        result.insert(key, value);
+        result.push((key, value));
     }
     for (key, value) in others {
-        result.insert(key, value);
+        result.push((key, value));
     }
     result
 }
 
-fn sort_people_object(obj: Map<String, Value>) -> Map<String, Value> {
+fn sort_people_object(obj: Object<'_>) -> Object<'_> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
-fn sort_dev_engine(value: Value) -> Value {
+fn sort_dev_engine(value: Value<'_>) -> Value<'_> {
     const KEY_ORDER: &[&str] = &["name", "version", "onFail"];
 
     match value {
@@ -182,10 +186,10 @@ fn sort_dev_engine(value: Value) -> Value {
     }
 }
 
-fn sort_dev_engines(obj: Map<String, Value>) -> Map<String, Value> {
-    let mut obj: Map<String, Value> =
+fn sort_dev_engines(obj: Object<'_>) -> Object<'_> {
+    let mut obj: Object<'_> =
         obj.into_iter().map(|(key, value)| (key, sort_dev_engine(value))).collect();
-    obj.sort_keys();
+    obj.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
     obj
 }
 
@@ -200,7 +204,7 @@ macro_rules! declare_field_order {
         $key:ident, $value:ident, $known:ident, $unknown:ident;
         [ $( $idx:literal => $field_name:literal $( => $transform:expr )? ),* $(,)? ]
     ) => {
-        match $key.as_str() {
+        match $key.as_ref() {
             $(
                 $field_name => $known.push((
                     $idx,
@@ -215,11 +219,11 @@ macro_rules! declare_field_order {
     (@value $value:ident, $transform:expr) => { $transform };
 }
 
-fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<String, Value> {
+fn sort_object_keys<'a>(obj: Object<'a>, options: &SortOptions) -> Object<'a> {
     // `known` collects fields with a canonical position; `unknown` collects everything
     // else, sorted with private (`_`-prefixed) keys after non-private ones.
-    let mut known: Vec<(usize, String, Value)> = Vec::new();
-    let mut unknown: Vec<(String, Value)> = Vec::new();
+    let mut known: Vec<(usize, Cow<'a, str>, Value<'a>)> = Vec::new();
+    let mut unknown: Object<'a> = Vec::new();
 
     for (key, value) in obj {
         declare_field_order!(key, value, known, unknown; [
@@ -391,12 +395,12 @@ fn sort_object_keys(obj: Map<String, Value>, options: &SortOptions) -> Map<Strin
         a_priv.cmp(&b_priv).then_with(|| a.cmp(b))
     });
 
-    let mut result = Map::with_capacity(known.len() + unknown.len());
+    let mut result = Vec::with_capacity(known.len() + unknown.len());
     for (_, key, value) in known {
-        result.insert(key, value);
+        result.push((key, value));
     }
     for (key, value) in unknown {
-        result.insert(key, value);
+        result.push((key, value));
     }
     result
 }

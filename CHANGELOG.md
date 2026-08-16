@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.15](https://github.com/oxc-project/sort-package-json/compare/v0.0.14...v0.0.15) - 2026-08-16
+
+### Fixed
+
+- sort devEngines descriptor fields ([#155](https://github.com/oxc-project/sort-package-json/pull/155))
+
+### Other
+
+- *(deps)* update Rust dependencies ([#157](https://github.com/oxc-project/sort-package-json/pull/157))
+- borrow JSON strings during sorting ([#156](https://github.com/oxc-project/sort-package-json/pull/156))
+- reduce Rust dev debug info ([#153](https://github.com/oxc-project/sort-package-json/pull/153))
+- *(deps)* update rust crate ignore to v0.4.33 ([#151](https://github.com/oxc-project/sort-package-json/pull/151))
+- *(deps)* update rust crates ([#144](https://github.com/oxc-project/sort-package-json/pull/144))
+- *(deps)* update rust crate ignore to v0.4.30 ([#142](https://github.com/oxc-project/sort-package-json/pull/142))
+- update sponsor section
+
 ## [0.0.14](https://github.com/oxc-project/sort-package-json/compare/v0.0.13...v0.0.14) - 2026-07-13
 
 ### Added

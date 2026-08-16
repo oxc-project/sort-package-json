@@ -96,3 +96,31 @@ fn test_utf8_bom_preservation() {
     let second_sort = sort(&result);
     assert_eq!(result, second_sort, "Sorting BOM files should be idempotent");
 }
+
+#[test]
+fn test_json_representation_edge_cases() {
+    let input = r#"{
+  "version": "first",
+  "description": "line\n\u0061",
+  "name": "pkg",
+  "version": "last",
+  "nested": { "duplicate": 1, "duplicate": 2 },
+  "number": 1e+01
+}"#;
+
+    let pretty =
+        sort_package_json_with_options(input, &SortOptions { pretty: true, sort_scripts: false })
+            .unwrap();
+    assert_eq!(
+        pretty,
+        "{\n  \"name\": \"pkg\",\n  \"version\": \"last\",\n  \"description\": \"line\\na\",\n  \"nested\": {\n    \"duplicate\": 2\n  },\n  \"number\": 10.0\n}\n"
+    );
+
+    let compact =
+        sort_package_json_with_options(input, &SortOptions { pretty: false, sort_scripts: false })
+            .unwrap();
+    assert_eq!(
+        compact,
+        r#"{"name":"pkg","version":"last","description":"line\na","nested":{"duplicate":2},"number":10.0}"#
+    );
+}

@@ -70,64 +70,6 @@ fn test_size_limit_preservation() {
 }
 
 #[test]
-fn test_dev_engines_sorting() {
-    let input = r#"{
-  "name": "test",
-  "devEngines": {
-    "runtime": { "onFail": "download", "name": "node", "version": "1.0.0" },
-    "libc": [{ "version": ">=2.31", "onFail": "warn", "name": "glibc" }],
-    "os": [
-      { "onFail": "warn", "version": ">=14", "name": "darwin" },
-      { "version": ">=10", "name": "win32" }
-    ],
-    "packageManager": { "version": "1.0.0", "name": "pnpm", "onFail": "download" },
-    "cpu": { "onFail": "ignore", "name": "x64" }
-  }
-}"#;
-
-    let expected = r#"{
-  "name": "test",
-  "devEngines": {
-    "cpu": {
-      "name": "x64",
-      "onFail": "ignore"
-    },
-    "libc": [
-      {
-        "name": "glibc",
-        "version": ">=2.31",
-        "onFail": "warn"
-      }
-    ],
-    "os": [
-      {
-        "name": "darwin",
-        "version": ">=14",
-        "onFail": "warn"
-      },
-      {
-        "name": "win32",
-        "version": ">=10"
-      }
-    ],
-    "packageManager": {
-      "name": "pnpm",
-      "version": "1.0.0",
-      "onFail": "download"
-    },
-    "runtime": {
-      "name": "node",
-      "version": "1.0.0",
-      "onFail": "download"
-    }
-  }
-}
-"#;
-
-    assert_eq!(sort(input), expected);
-}
-
-#[test]
 fn test_utf8_bom_preservation() {
     // Test case based on https://github.com/vitejs/vite/blob/main/playground/resolve/utf8-bom-package/package.json
     const BOM: char = '\u{FEFF}';

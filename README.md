@@ -19,10 +19,10 @@ A Rust implementation that sorts package.json files according to well-establishe
 
 ## Features
 
-- **Sorts top-level fields** according to npm ecosystem conventions (138 predefined fields)
-- **Preserves all data** - only reorders fields, never modifies values
+- **Sorts top-level fields** according to npm ecosystem conventions (140 predefined fields)
+- **Normalizes string lists** where the ecosystem convention is to sort and remove duplicates
 - **Respects semantics** - `exports` and `imports` fields preserve their key order (first-match resolution)
-- **Fast and safe** - pure Rust implementation with no unsafe code
+- **Fast and memory-efficient** - borrows unescaped strings and minimizes output allocations
 - **Idempotent** - sorting multiple times produces the same result
 - **Handles edge cases** - unknown fields sorted alphabetically, private fields (starting with `_`) sorted last
 
@@ -32,7 +32,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-sort-package-json = "0.0.5"
+sort-package-json = "1"
 ```
 
 ### Library API
@@ -53,8 +53,9 @@ With custom options:
 ```rust
 use sort_package_json::{sort_package_json_with_options, SortOptions};
 
-let options = SortOptions { pretty: false };
-let sorted = sort_package_json_with_options(&contents, &options)?;
+let contents = r#"{"scripts":{"test":"vitest","build":"tsup"}}"#;
+let options = SortOptions::new().with_pretty(false).with_sort_scripts(true);
+let sorted = sort_package_json_with_options(contents, &options).expect("valid package.json");
 ```
 
 ### Running the Example
@@ -93,7 +94,7 @@ After sorting:
 
 ## Field Ordering
 
-Fields are sorted into 12 logical groups, followed by unknown fields alphabetically, then private fields (starting with `_`) at the end. The complete field order is based on both the [original sort-package-json](https://github.com/keithamus/sort-package-json/blob/main/index.js) and [prettier's package.json sorting](https://github.com/un-ts/prettier/blob/master/packages/pkg/src/rules/sort.ts) implementations.
+Fields are sorted into 12 logical groups, followed by unknown fields alphabetically, then private fields (starting with `_`) at the end. The abbreviated example below shows the groups and common fields. The ordering is based on both the [original sort-package-json](https://github.com/keithamus/sort-package-json/blob/main/index.js) and [Prettier's package.json sorting](https://github.com/un-ts/prettier/blob/master/packages/pkg/src/rules/sort.ts) implementations.
 
 ```jsonc
 {
@@ -222,11 +223,6 @@ Or to accept all changes:
 ```bash
 cargo insta accept
 ```
-
-### Test Coverage
-
-- **Field ordering test** - verifies correct sorting of all field types
-- **Idempotency test** - ensures sorting is stable (sorting twice = sorting once)
 
 ## License
 

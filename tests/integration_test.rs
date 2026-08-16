@@ -3,8 +3,8 @@ use sort_package_json::{SortOptions, sort_package_json_with_options};
 use std::fs;
 
 fn sort(s: &str) -> String {
-    sort_package_json_with_options(s, &SortOptions { pretty: true, sort_scripts: true })
-        .expect("Failed to parse package.json")
+    let options = SortOptions::new().with_sort_scripts(true);
+    sort_package_json_with_options(s, &options).expect("Failed to parse package.json")
 }
 
 #[test]
@@ -108,17 +108,14 @@ fn test_json_representation_edge_cases() {
   "number": 1e+01
 }"#;
 
-    let pretty =
-        sort_package_json_with_options(input, &SortOptions { pretty: true, sort_scripts: false })
-            .unwrap();
+    let pretty = sort_package_json_with_options(input, &SortOptions::new()).unwrap();
     assert_eq!(
         pretty,
         "{\n  \"name\": \"pkg\",\n  \"version\": \"last\",\n  \"description\": \"line\\na\",\n  \"nested\": {\n    \"duplicate\": 2\n  },\n  \"number\": 10.0\n}\n"
     );
 
     let compact =
-        sort_package_json_with_options(input, &SortOptions { pretty: false, sort_scripts: false })
-            .unwrap();
+        sort_package_json_with_options(input, &SortOptions::new().with_pretty(false)).unwrap();
     assert_eq!(
         compact,
         r#"{"name":"pkg","version":"last","description":"line\na","nested":{"duplicate":2},"number":10.0}"#

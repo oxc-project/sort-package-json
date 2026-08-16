@@ -1,3 +1,15 @@
+//! Sort `package.json` fields according to established npm conventions.
+//!
+//! The default API returns pretty-printed JSON with a trailing newline:
+//!
+//! ```
+//! let input = r#"{"version":"1.0.0","name":"example"}"#;
+//! let sorted = sort_package_json::sort_package_json(input)?;
+//!
+//! assert_eq!(sorted, "{\n  \"name\": \"example\",\n  \"version\": \"1.0.0\"\n}\n");
+//! # Ok::<(), serde_json::Error>(())
+//! ```
+
 mod value;
 
 use std::borrow::Cow;
@@ -8,7 +20,8 @@ use value::{Object, Value};
 const BOM_STR: &str = "\u{FEFF}";
 
 /// Options for controlling JSON formatting when sorting.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[non_exhaustive]
 pub struct SortOptions {
     /// Whether to pretty-print the output JSON.
     pub pretty: bool,
@@ -16,13 +29,42 @@ pub struct SortOptions {
     pub sort_scripts: bool,
 }
 
-impl Default for SortOptions {
-    fn default() -> Self {
+impl SortOptions {
+    /// Creates options with the default behavior.
+    #[must_use]
+    pub const fn new() -> Self {
         Self { pretty: true, sort_scripts: false }
+    }
+
+    /// Sets whether the output is pretty-printed.
+    #[must_use]
+    pub const fn with_pretty(mut self, pretty: bool) -> Self {
+        self.pretty = pretty;
+        self
+    }
+
+    /// Sets whether the `scripts`, `betterScripts`, and `wireit` fields are sorted.
+    #[must_use]
+    pub const fn with_sort_scripts(mut self, sort_scripts: bool) -> Self {
+        self.sort_scripts = sort_scripts;
+        self
     }
 }
 
-/// Sorts a `package.json` string with custom options.
+impl Default for SortOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Sorts a `package.json` string using custom [`SortOptions`].
+///
+/// A UTF-8 byte order mark in `input` is preserved. Pretty-printed output ends in a newline;
+/// compact output does not.
+///
+/// # Errors
+///
+/// Returns an error when `input` is not valid JSON.
 pub fn sort_package_json_with_options(
     input: &str,
     options: &SortOptions,
@@ -61,7 +103,13 @@ pub fn sort_package_json_with_options(
     Ok(unsafe { String::from_utf8_unchecked(buf) })
 }
 
-/// Sorts a `package.json` string with default options (pretty-printed).
+/// Sorts a `package.json` string with the default options.
+///
+/// The output is pretty-printed with a trailing newline. Script order is preserved.
+///
+/// # Errors
+///
+/// Returns an error when `input` is not valid JSON.
 pub fn sort_package_json(input: &str) -> Result<String, serde_json::Error> {
     sort_package_json_with_options(input, &SortOptions::default())
 }

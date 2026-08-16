@@ -2,16 +2,15 @@
 name = "sort-package-json"
 version = "0.0.15"
 authors = ["Boshen <boshenc@gmail.com>"]
-categories = []
+categories = ["development-tools"]
 edition = "2021"
-include = ["/src"]
-keywords = []
+include = ["/src", "/benches", "/examples", "/tests", "/CHANGELOG.md", "/LICENSE", "/README.md"]
+keywords = ["formatter", "json", "npm", "package-json", "sort"]
 license = "MIT"
-publish = true
 readme = "README.md"
 repository = "https://github.com/oxc-project/sort-package-json"
 rust-version = "1.76"
-description = "A Rust implementation of sort-package-json that sorts package.json files according to well-established npm conventions"
+description = "Sort package.json files according to established npm conventions"
 
 [lints.rust]
 absolute_paths_not_starting_with_crate = "warn"
@@ -55,10 +54,6 @@ criterion2 = { version = "3", default-features = false }
 ignore = "0.4"
 insta = "1.41"
 
-[lib]
-test = false
-doctest = false
-
 [[bench]]
 name = "sort"
 harness = false
@@ -74,7 +69,7 @@ lto = "fat"
 codegen-units = 1
 strip = "symbols" # set to `false` for debug information
 debug = false # set to `true` for debug information
-panic = "abort" # Let it crash and force ourselves to write safe Rust.
+panic = "abort" # Abort instead of unwinding in release builds.
 
 [profile.dev]
 debug = "line-tables-only"

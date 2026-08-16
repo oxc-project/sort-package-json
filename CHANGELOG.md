@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0](https://github.com/oxc-project/sort-package-json/compare/v0.0.15...v1.0.0) - 2026-08-16
+
+### Changed
+
+- **Breaking:** Stabilize the public `SortOptions` API and refresh crate metadata and documentation ([#158](https://github.com/oxc-project/sort-package-json/pull/158))
+
 ## [0.0.15](https://github.com/oxc-project/sort-package-json/compare/v0.0.14...v0.0.15) - 2026-08-16
 
 ### Fixed

@@ -223,6 +223,43 @@ fn sort_people_object(obj: Object<'_>) -> Object<'_> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
+/// Sorts an `exports` / `imports` condition object.
+///
+/// Keys starting with `"."` are path specifiers and keep their original order (the
+/// resolution algorithm considers declaration order). All other keys are condition
+/// names; they retain their relative order **except** that `"default"` is always
+/// moved to the very end (Node.js treats it as the fallback, so it must come last).
+///
+/// Nested objects are processed recursively so that deeply-nested condition maps
+/// (e.g. `".": { "node": { "import": "…", "default": "…" } }`) are also sorted.
+fn sort_exports_object(obj: Object<'_>) -> Object<'_> {
+    let mut paths: Object<'_> = Vec::new();
+    let mut conditions: Object<'_> = Vec::new();
+    let mut default_entry: Option<(Cow<'_, str>, Value<'_>)> = None;
+
+    for (key, value) in obj {
+        // Recurse into nested objects.
+        let value = transform_value(value, sort_exports_object);
+
+        if key.starts_with('.') {
+            paths.push((key, value));
+        } else if key.as_ref() == "default" {
+            default_entry = Some((key, value));
+        } else {
+            conditions.push((key, value));
+        }
+    }
+
+    // Conditions retain their original declaration order (important for Node.js
+    // resolution semantics). Only `"default"` is relocated to the end.
+    let cap = paths.len() + conditions.len() + usize::from(default_entry.is_some());
+    let mut result = Vec::with_capacity(cap);
+    result.extend(paths);
+    result.extend(conditions);
+    result.extend(default_entry);
+    result
+}
+
 fn sort_dev_engine(value: Value<'_>) -> Value<'_> {
     const KEY_ORDER: &[&str] = &["name", "version", "onFail"];
 
@@ -343,8 +380,8 @@ fn sort_object_keys<'a>(obj: Object<'a>, options: &SortOptions) -> Object<'a> {
             60 => "esm2020",
             61 => "fesm2020",
             62 => "esnext",
-            63 => "imports",
-            64 => "exports",
+            63 => "imports" => transform_value(value, sort_exports_object),
+            64 => "exports" => transform_value(value, sort_exports_object),
             65 => "publishConfig" => transform_value(value, |o| sort_object_keys(o, options)),
             // Scripts
             66 => "scripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },

@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(deps)* update dependency dprint-json to v0.24.0 ([#176](https://github.com/oxc-project/sort-package-json/pull/176))
-- *(deps)* update codspeedhq/action action to v5.2.1 ([#164](https://github.com/oxc-project/sort-package-json/pull/164))
+- _(deps)_ update dependency dprint-json to v0.24.0 ([#176](https://github.com/oxc-project/sort-package-json/pull/176))
+- _(deps)_ update codspeedhq/action action to v5.2.1 ([#164](https://github.com/oxc-project/sort-package-json/pull/164))
 
 ## [1.0.0](https://github.com/oxc-project/sort-package-json/compare/v0.0.15...v1.0.0) - 2026-08-16
 

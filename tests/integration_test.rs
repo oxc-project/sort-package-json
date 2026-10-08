@@ -121,3 +121,53 @@ fn test_json_representation_edge_cases() {
         r#"{"name":"pkg","version":"last","description":"line\na","nested":{"duplicate":2},"number":10.0}"#
     );
 }
+
+#[test]
+fn test_custom_indent_tab() {
+    let input = r#"{"version":"1.0.0","name":"example"}"#;
+    let result =
+        sort_package_json_with_options(input, &SortOptions::new().with_indent("\t")).unwrap();
+    assert_eq!(result, "{\n\t\"name\": \"example\",\n\t\"version\": \"1.0.0\"\n}\n");
+}
+
+#[test]
+fn test_custom_indent_four_spaces() {
+    let input = r#"{"version":"1.0.0","name":"example"}"#;
+    let result =
+        sort_package_json_with_options(input, &SortOptions::new().with_indent("    ")).unwrap();
+    assert_eq!(
+        result,
+        "{\n    \"name\": \"example\",\n    \"version\": \"1.0.0\"\n}\n"
+    );
+}
+
+#[test]
+fn test_custom_indent_nested() {
+    let input = r#"{"dependencies":{"b":"2","a":"1"},"name":"pkg"}"#;
+    let result =
+        sort_package_json_with_options(input, &SortOptions::new().with_indent("\t")).unwrap();
+    assert_eq!(
+        result,
+        "{\n\t\"name\": \"pkg\",\n\t\"dependencies\": {\n\t\t\"a\": \"1\",\n\t\t\"b\": \"2\"\n\t}\n}\n"
+    );
+}
+
+#[test]
+fn test_custom_indent_default_unchanged() {
+    let input = r#"{"version":"1.0.0","name":"example"}"#;
+    let with_default = sort_package_json_with_options(input, &SortOptions::new()).unwrap();
+    let with_explicit =
+        sort_package_json_with_options(input, &SortOptions::new().with_indent("  ")).unwrap();
+    assert_eq!(with_default, with_explicit);
+}
+
+#[test]
+fn test_custom_indent_ignored_when_not_pretty() {
+    let input = r#"{"version":"1.0.0","name":"example"}"#;
+    let result = sort_package_json_with_options(
+        input,
+        &SortOptions::new().with_pretty(false).with_indent("\t"),
+    )
+    .unwrap();
+    assert_eq!(result, r#"{"name":"example","version":"1.0.0"}"#);
+}

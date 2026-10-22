@@ -223,6 +223,198 @@ fn sort_people_object(obj: Object<'_>) -> Object<'_> {
     sort_object_by_key_order(obj, &["name", "email", "url"])
 }
 
+// ===== Scripts sorting with lifecycle grouping ==============================
+
+/// npm lifecycle scripts whose `pre` / `post` prefixes are always recognized,
+/// even when the base name itself is not explicitly present in the `scripts`
+/// object. See <https://docs.npmjs.com/cli/v10/using-npm/scripts>.
+const DEFAULT_NPM_SCRIPTS: &[&str] = &[
+    "install",
+    "pack",
+    "prepare",
+    "publish",
+    "restart",
+    "shrinkwrap",
+    "start",
+    "stop",
+    "test",
+    "uninstall",
+    "version",
+];
+
+/// Recursively sort script names by colon-delimited namespace.
+///
+/// 1. All names are partitioned into groups. The group key for a name is the
+///    text before the **first** colon after `prefix`. Names that have no colon
+///    (i.e. are exactly the group key) are "direct" members.
+/// 2. Groups are sorted alphabetically by group key.
+/// 3. Within each group the direct member (if any) comes first, followed by
+///    the colon-children **recursively sorted** using the group key as the new
+///    prefix.
+///
+/// This mirrors the JS `sortScriptNames` in `sort-package-json`.
+fn sort_script_names(names: &[&str], prefix: &str) -> Vec<String> {
+    // Collect groups: group_key → list of full names.
+    let mut groups: Vec<(&str, Vec<&str>)> = Vec::new();
+    let mut group_index = std::collections::HashMap::<&str, usize>::new();
+
+    for &name in names {
+        // Portion of the name after the prefix (+ separator colon).
+        let rest = if prefix.is_empty() { name } else { &name[prefix.len() + 1..] };
+        let colon_idx = rest.find(':');
+        let group_key = match colon_idx {
+            // Has a colon after at least one character → group key is the part before it.
+            // If the colon is at position 0 (name starts with `:` or `prefix::`) the
+            // name is treated as having no sub-namespace — same as `None`.
+            Some(idx) if idx > 0 => {
+                let base_len = if prefix.is_empty() { idx } else { prefix.len() + 1 + idx };
+                &name[..base_len]
+            }
+            // No colon, or colon at position 0 → the name itself is the group key.
+            _ => name,
+        };
+
+        if let Some(&gi) = group_index.get(group_key) {
+            groups[gi].1.push(name);
+        } else {
+            group_index.insert(group_key, groups.len());
+            groups.push((group_key, vec![name]));
+        }
+    }
+
+    // Sort groups by group key.
+    groups.sort_by_key(|(a, _)| *a);
+
+    let mut result = Vec::with_capacity(names.len());
+    for (group_key, children) in groups {
+        if children.len() > 1
+            && children.iter().any(|k| *k != group_key && k.starts_with(group_key))
+        {
+            // Separate direct members from colon-children.
+            let mut direct: Vec<&str> = children
+                .iter()
+                .filter(|k| **k == group_key || !k.starts_with(&format!("{group_key}:")))
+                .copied()
+                .collect();
+            direct.sort();
+
+            let nested: Vec<&str> = children
+                .iter()
+                .filter(|k| k.starts_with(&format!("{group_key}:")))
+                .copied()
+                .collect();
+
+            result.extend(direct.into_iter().map(String::from));
+            result.extend(sort_script_names(&nested, group_key));
+        } else {
+            let mut sorted: Vec<&str> = children;
+            sorted.sort();
+            result.extend(sorted.into_iter().map(String::from));
+        }
+    }
+    result
+}
+
+/// Sorts a `scripts` (or `betterScripts`) object with colon-namespace grouping
+/// and lifecycle (`pre` / `post`) script collocation.
+///
+/// The algorithm (matching the npm `sort-package-json` package):
+///
+/// 1. **Deduplicate prefixable names** — for every name starting with `pre` or
+///    `post`, check whether the remainder is either a default npm lifecycle
+///    script **or** an explicit script in the object. If so, record the base
+///    name as *prefixable* and replace the original with its base name in the
+///    sort input.
+/// 2. **Sort by colon namespace** — call [`sort_script_names`].
+/// 3. **Expand prefixable names** — each prefixable base name is expanded to
+///    `[pre<name>, <name>, post<name>]`.
+/// 4. **Reorder the object** according to the computed name list. Scripts whose
+///    names do not appear in the list (e.g. orphan `pre` / `post` scripts after
+///    expansion that have no corresponding entry in the original object) are
+///    silently omitted, and scripts present in the original but absent from the
+///    list are appended in their original order.
+fn sort_scripts_object(obj: Object<'_>) -> Object<'_> {
+    let keys: Vec<&str> = obj.iter().map(|(k, _)| k.as_ref()).collect();
+    let key_set: std::collections::HashSet<&str> = keys.iter().copied().collect();
+
+    // Step 1: Determine which base names are prefixable.
+    let mut prefixable = std::collections::HashSet::new();
+    let mut deduped_names: Vec<&str> = Vec::with_capacity(keys.len());
+
+    for &name in &keys {
+        if let Some(base) = name.strip_prefix("pre") {
+            if !base.is_empty()
+                && (DEFAULT_NPM_SCRIPTS.contains(&base) || key_set.contains(base))
+            {
+                prefixable.insert(base);
+                if !deduped_names.contains(&base) {
+                    deduped_names.push(base);
+                }
+                continue;
+            }
+        }
+        if let Some(base) = name.strip_prefix("post") {
+            if !base.is_empty()
+                && (DEFAULT_NPM_SCRIPTS.contains(&base) || key_set.contains(base))
+            {
+                prefixable.insert(base);
+                if !deduped_names.contains(&base) {
+                    deduped_names.push(base);
+                }
+                continue;
+            }
+        }
+        if !deduped_names.contains(&name) {
+            deduped_names.push(name);
+        }
+    }
+
+    // Step 2: Sort by colon namespace.
+    let sorted_names = sort_script_names(&deduped_names, "");
+
+    // Step 3: Expand prefixable names.
+    let mut ordered_names: Vec<String> = Vec::with_capacity(keys.len());
+    for name in &sorted_names {
+        if prefixable.contains(name.as_str()) {
+            let pre = format!("pre{name}");
+            let post = format!("post{name}");
+            ordered_names.push(pre);
+            ordered_names.push(name.clone());
+            ordered_names.push(post);
+        } else {
+            ordered_names.push(name.clone());
+        }
+    }
+
+    // Step 4: Reorder object entries.
+    // Build a position map for O(1) lookup.
+    let position: std::collections::HashMap<&str, usize> = ordered_names
+        .iter()
+        .enumerate()
+        .map(|(i, name)| (name.as_str(), i))
+        .collect();
+
+    let mut entries: Vec<(usize, Cow<'_, str>, Value<'_>)> = Vec::with_capacity(obj.len());
+    let mut unordered: Object<'_> = Vec::new();
+
+    for (key, value) in obj {
+        match position.get(key.as_ref()) {
+            Some(&pos) => entries.push((pos, key, value)),
+            // Original key not in expansion list → append at end.
+            None => unordered.push((key, value)),
+        }
+    }
+
+    entries.sort_by_key(|(pos, _, _)| *pos);
+
+    let mut result = Vec::with_capacity(entries.len() + unordered.len());
+    for (_, key, value) in entries {
+        result.push((key, value));
+    }
+    result.extend(unordered);
+    result
+}
+
 fn sort_dev_engine(value: Value<'_>) -> Value<'_> {
     const KEY_ORDER: &[&str] = &["name", "version", "onFail"];
 
@@ -347,8 +539,8 @@ fn sort_object_keys<'a>(obj: Object<'a>, options: &SortOptions) -> Object<'a> {
             64 => "exports",
             65 => "publishConfig" => transform_value(value, |o| sort_object_keys(o, options)),
             // Scripts
-            66 => "scripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },
-            67 => "betterScripts" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },
+            66 => "scripts" => if options.sort_scripts { transform_value(value, sort_scripts_object) } else { value },
+            67 => "betterScripts" => if options.sort_scripts { transform_value(value, sort_scripts_object) } else { value },
             68 => "wireit" => if options.sort_scripts { transform_value(value, sort_object_alphabetically) } else { value },
             // Dependencies
             69 => "dependencies" => transform_value(value, sort_object_alphabetically),

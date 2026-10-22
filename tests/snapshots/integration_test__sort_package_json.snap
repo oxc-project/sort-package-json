@@ -118,9 +118,9 @@ expression: result
     "build": "webpack",
     "dev": "webpack serve",
     "lint": "eslint .",
-    "posttest": "echo 'Tests complete'",
     "pretest": "echo 'Starting tests'",
-    "test": "jest"
+    "test": "jest",
+    "posttest": "echo 'Tests complete'"
   },
   "dependencies": {
     "axios": "^1.0.0",

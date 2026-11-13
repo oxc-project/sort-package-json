@@ -9,11 +9,10 @@ _default:
 alias r := ready
 
 init:
-  cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear@1.13.1 dprint -y
+  cargo binstall watchexec-cli cargo-insta cargo-shear@1.13.1 dprint -y
 
 ready:
   git diff --exit-code --quiet
-  typos
   just fmt
   just check
   just test

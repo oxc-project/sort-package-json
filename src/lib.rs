@@ -14,39 +14,54 @@ mod value;
 
 use std::borrow::Cow;
 
+use serde::Serialize;
+use serde_json::ser::{PrettyFormatter, Serializer};
 use value::{Object, Value};
 
 /// UTF-8 BOM (`U+FEFF`).
 const BOM_STR: &str = "\u{FEFF}";
 
 /// Options for controlling JSON formatting when sorting.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[non_exhaustive]
 pub struct SortOptions {
     /// Whether to pretty-print the output JSON.
     pub pretty: bool,
     /// Whether to sort the scripts field alphabetically.
     pub sort_scripts: bool,
+    /// Indentation string used when pretty-printing (e.g. `"  "`, `"\t"`, `"    "`).
+    ///
+    /// Defaults to two spaces. Only meaningful when [`pretty`](Self::pretty) is `true`.
+    pub indent: String,
 }
 
 impl SortOptions {
     /// Creates options with the default behavior.
     #[must_use]
-    pub const fn new() -> Self {
-        Self { pretty: true, sort_scripts: false }
+    pub fn new() -> Self {
+        Self { pretty: true, sort_scripts: false, indent: "  ".to_string() }
     }
 
     /// Sets whether the output is pretty-printed.
     #[must_use]
-    pub const fn with_pretty(mut self, pretty: bool) -> Self {
+    pub fn with_pretty(mut self, pretty: bool) -> Self {
         self.pretty = pretty;
         self
     }
 
     /// Sets whether the `scripts`, `betterScripts`, and `wireit` fields are sorted.
     #[must_use]
-    pub const fn with_sort_scripts(mut self, sort_scripts: bool) -> Self {
+    pub fn with_sort_scripts(mut self, sort_scripts: bool) -> Self {
         self.sort_scripts = sort_scripts;
+        self
+    }
+
+    /// Sets the indentation string used when pretty-printing.
+    ///
+    /// Common values: `"  "` (two spaces, the default), `"\t"` (tab), `"    "` (four spaces).
+    #[must_use]
+    pub fn with_indent<S: Into<String>>(mut self, indent: S) -> Self {
+        self.indent = indent.into();
         self
     }
 }
@@ -92,7 +107,9 @@ pub fn sort_package_json_with_options(
         buf.extend_from_slice(BOM_STR.as_bytes());
     }
     if options.pretty {
-        serde_json::to_writer_pretty(&mut buf, &sorted)?;
+        let formatter = PrettyFormatter::with_indent(options.indent.as_bytes());
+        let mut ser = Serializer::with_formatter(&mut buf, formatter);
+        sorted.serialize(&mut ser)?;
         buf.push(b'\n');
     } else {
         serde_json::to_writer(&mut buf, &sorted)?;
